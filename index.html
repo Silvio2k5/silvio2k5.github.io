@@ -81,7 +81,7 @@ main{padding:28px 0 80px;display:flex;flex-direction:column;gap:28px}
 .chip{height:34px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--dim);font-size:14px;font-weight:500}
 .chip:hover{color:var(--paper)}
 .chip.on{background:var(--paper);color:var(--ink);border-color:var(--paper)}
-.chip.fav.on{background:var(--coin);border-color:var(--coin);color:var(--coin-ink)}
+.chip.favchip.on{background:var(--coin);border-color:var(--coin);color:var(--coin-ink)}
 .sort{display:flex;align-items:center;gap:8px;color:var(--dim);font-size:14px}
 .sort select{height:34px;border-radius:99px;border:1px solid var(--line);background:var(--shelf);padding:0 12px}
 
@@ -328,7 +328,7 @@ function renderChips(){
   const favCount = S.favs.filter(id => S.games.some(g => g.id === id)).length;
   $("#chips").innerHTML = `<button class="chip ${!S.genre ? "on" : ""}" data-genre="">Alle</button>` +
     genres.map(x => `<button class="chip ${S.genre === x ? "on" : ""}" data-genre="${esc(x)}">${esc(x)}</button>`).join("") +
-    `<button class="chip fav ${S.onlyFav ? "on" : ""}" data-onlyfav="1" aria-pressed="${S.onlyFav}">★ Favoriten${favCount ? " · " + favCount : ""}</button>`;
+    `<button class="chip favchip ${S.onlyFav ? "on" : ""}" data-onlyfav="1" aria-pressed="${S.onlyFav}">★ Favoriten${favCount ? " · " + favCount : ""}</button>`;
 }
 function renderGrid(){
   const el = $("#grid");
