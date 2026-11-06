@@ -3,7 +3,7 @@
 //  Hier deine Supabase-Daten eintragen (Supabase > Project Settings > API):
 // ================================================================
 const BL_URL = "https://hibfzyxbmbspfhpughim.supabase.co";
-const BL_KEY = "HIER_ANON_KEY_EINFUEGEN";      // der öffentliche "anon" bzw. "publishable" Key
+const BL_KEY = "sb_publishable_w4PzkJlkAo5WN2PrFftWvg_iN2b_Rz0";      // der öffentliche "anon" bzw. "publishable" Key
 
 // Welche Spiele eine Bestenliste haben und wo das Spiel seine Siege speichert:
 const BL_SPIELE = {
