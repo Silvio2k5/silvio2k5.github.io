@@ -313,14 +313,15 @@ function applyBall(){
   m.map=b.t?ballTex(outfit.ball):null;m.color.set(b.t?0xffffff:b.c);m.emissive.set(b.e||0);m.needsUpdate=true;
   for(const d of bm.children){d.visible=!b.t;if(b.p!==undefined)d.material.color.set(b.p);}
 }
+const SKIN=[0xf0c8a0,0xffe3cf,0xe3ac80,0xc68642,0x8d5524,0x5a3820,0x3b2416];
 const BOOTS=[0x151515,0xd63a2f,0xf5d90a,0x2455c9,0x8fbf5f,0xe05a9c,0x7a2fc2,0xe0a030],HAIR=[0x4a2f1b,0xe3c36a,0xb8461f,0x1a1a1a];
 const PATN=['Einfarbig','Streifen','Ringel','Halbiert','Schärpe','Karo','Punkte'],HEADN=['Glatze','Haare','Irokese','Afro','Mütze','Kappe','Stirnband'],SOCKN=['Weiß','Heimfarbe','Zweitfarbe'],EXTN=['Keine','Sonnenbrille','Schnurrbart','Clownsnase'];
 const MOUTHN=['Keiner','Lächeln','Grinsen','Offen','Zunge raus','Vampir'],EYEN=['Keine','Punkte','Große Augen','Zwinkern'],PAINTN=['Keine','Wangenstreifen','Augenbalken','Sommersprossen'];
 const SPECN=['Keins','Heiligenschein','Umhang','Flügel','Krone','Hörner'];
-const outfit={pat:0,sec:3,boot:0,sock:0,head:0,hair:0,extra:0,mouth:0,eyes:0,paint:0,special:0,back:0,ball:0};
+const outfit={pat:0,sec:3,boot:0,sock:0,head:0,hair:0,extra:0,mouth:0,eyes:0,paint:0,special:0,back:0,ball:0,skin:0};
 try{Object.assign(outfit,JSON.parse(localStorage.getItem('fnOutfit')||'{}'));}catch(e){}
 if(outfit.special===2||outfit.special===3){outfit.back=outfit.special;outfit.special=0;}
-{const lim={pat:7,sec:8,boot:8,sock:3,head:7,hair:4,extra:4,mouth:6,eyes:4,paint:4,special:6,back:6,ball:BALLS.length};for(const k in lim)if(!(outfit[k]>=0&&outfit[k]<lim[k]))outfit[k]=0;}
+{const lim={pat:7,sec:8,boot:8,sock:3,head:7,hair:4,extra:4,mouth:6,eyes:4,paint:4,special:6,back:6,ball:BALLS.length,skin:SKIN.length};for(const k in lim)if(!(outfit[k]>=0&&outfit[k]<lim[k]))outfit[k]=0;}
 let wardOn=false,spin=true;
 const hex=c=>'#'+c.toString(16).padStart(6,'0');
 const jc=document.createElement('canvas');jc.width=jc.height=256;
@@ -388,13 +389,14 @@ function buildHat(){
     case 3:for(const[px,py]of[[-0.5,0.0],[-0.38,-0.08],[-0.3,0.02],[0.3,0.02],[0.38,-0.08],[0.5,0.0],[-0.44,0.08],[0.44,0.08]])add(new THREE.SphereGeometry(0.035,6,5),L(0x8a4a22),px,py,Math.sqrt(1-px*px-py*py)+0.005);break;
   }
 }
+function applySkin(){pm.children[1].material.color.set(SKIN[outfit.skin]||SKIN[0]);}
 function applyBoots(){
   const u=pm.userData;
   u.boot.color.set(BOOTS[outfit.boot]);
   u.sock.color.set(outfit.sock===0?0xf4f4f4:outfit.sock===1?homeCol:PAL[outfit.sec]);
 }
 function applyOutfit(){
-  paintJersey();buildHat();applyBoots();applyBall();
+  paintJersey();buildHat();applyBoots();applyBall();applySkin();
   try{localStorage.setItem('fnOutfit',JSON.stringify(outfit));}catch(e){}
 }
 const chips=(key,names,only)=>names.map((n,i)=>{if(only&&!only.includes(i))return '';const lk=!unlocked(key,i);return `<button class="mb${outfit[key]===i?' sel':''}${lk?' lk':''}" data-o="${key}:${i}">${lk?'🔒 ':''}${n}</button>`;}).join('');
@@ -406,6 +408,7 @@ function wardHtml(){
   <div class="lab">Schuhe</div><div class="grp">${swatches('boot',BOOTS)}</div>
   <div class="lab">Stutzen</div><div class="grp">${chips('sock',SOCKN)}</div>
   <div class="lab">Kopf</div><div class="grp">${chips('head',HEADN)}</div>
+  <div class="lab">Hautfarbe</div><div class="grp">${swatches('skin',SKIN)}</div>
   <div class="lab">Haarfarbe</div><div class="grp">${swatches('hair',HAIR)}</div>
   <div class="lab">Extras</div><div class="grp">${chips('extra',EXTN)}</div>
   <div class="lab">Mund</div><div class="grp">${chips('mouth',MOUTHN)}</div>
@@ -455,7 +458,7 @@ const SETS=[[
 ]];
 const TASKS=SETS[0].slice();
 let done0=0,unlockMsg='',wardMsg='';
-const LOCK={pat:[1,2,3,4,5,6],head:[1,2,3,4,5,6],boot:[1,2,3,4,5,6,7],hair:[1,2,3],extra:[1,2,3],mouth:[1,2,3,4,5],eyes:[1,2,3],paint:[1,2,3],ball:[1,2,3,4,5,6,7,8,9,10,11,12,13]};
+const LOCK={pat:[1,2,3,4,5,6],head:[1,2,3,4,5,6],boot:[1,2,3,4,5,6,7],extra:[1,2,3],mouth:[1,2,3,4,5],eyes:[1,2,3],paint:[1,2,3],ball:[1,2,3,4,5,6,7,8,9,10,11,12,13]};
 let unl=[],claimed=[],base={},taskRound=0;
 try{unl=JSON.parse(localStorage.getItem('fnUnl')||'[]');claimed=JSON.parse(localStorage.getItem('fnClaimed')||'[]');base=JSON.parse(localStorage.getItem('fnBase')||'{}')||{};taskRound=+localStorage.getItem('fnRound')||0;}catch(e){}
 function saveUnl(){try{localStorage.setItem('fnUnl',JSON.stringify(unl));localStorage.setItem('fnClaimed',JSON.stringify(claimed));localStorage.setItem('fnBase',JSON.stringify(base));localStorage.setItem('fnRound',taskRound);}catch(e){}}
@@ -484,7 +487,7 @@ function grant(){
 grant();
 for(const k in LOCK)if(!unlocked(k,outfit[k]))outfit[k]=0;
 if(!unlocked('special',outfit.special))outfit.special=0;if(!unlocked('back',outfit.back))outfit.back=0;
-paintJersey();buildHat();applyBoots();applyBall();
+paintJersey();buildHat();applyBoots();applyBall();applySkin();
 /* ---------- Anzeigetafel ---------- */
 const results=[];
 const bc=document.createElement('canvas');bc.width=500;bc.height=220;
