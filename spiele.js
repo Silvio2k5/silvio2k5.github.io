@@ -1,2 +1,2 @@
-// DEINE SPIELE - neue Eintraege zwischen die eckigen Klammern schreiben
-window.SPIELE = [];
+// DEINE SPIELE - ein Eintrag pro Spiel, getrennt durch Kommas
+window.SPIELE = [{id: "fussball-3d", titel: "Mini-Fußball 3D", datei: "spiele/fussball3d_neustart.html", beschreibung: "Fußball in 3D gegen Gegner in mehreren Stärkestufen - vom Anfänger bis zum Profi. Schieß Tore, kick Gegner weg und gewinne das Spiel.", genre: "Sport", steuerung: "Bewegen: Pfeiltasten oder WASD · Leertaste: Ball schießen oder Gegner wegkicken · Enter: Start/Weiter · P: Pause · Spieler drehen: rechts mit der Maus ziehen", symbol: "⚽", farbe: 120, titelbild: "", datum: "2026-11-06"}];
