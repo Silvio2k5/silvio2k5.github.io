@@ -309,7 +309,7 @@ function renderAll(){
 }
 function renderHero(){
   const el = $("#hero");
-  if (!S.games.length || S.q || S.genre || S.onlyFav){ el.innerHTML = ""; el.hidden = true; return; }
+  if (!S.games.length || S.q){ el.innerHTML = ""; el.hidden = true; return; }
   const g = [...S.games].sort(byNew)[0];
   el.hidden = false;
   el.innerHTML = `<section class="hero">
