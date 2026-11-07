@@ -1115,6 +1115,8 @@ msg.addEventListener('pointermove',e=>{if(!drag)return;pm.rotation.y+=(e.clientX
 for(const t of['pointerup','pointercancel'])msg.addEventListener(t,()=>{drag=null;});
 /* ---------- Vollbild ---------- */
 function toggleFs(){
+  // Auf dem Handy in der Spielbibliothek: Website-Leiste ein-/ausblenden (Vollbild übernimmt die Bibliothek)
+  if(window.parent!==window&&matchMedia('(pointer:coarse)').matches){try{if(parent.document.getElementById('player')){parent.postMessage({fb:'imm'},location.origin);return;}}catch(e){}}
   if(document.fullscreenElement){document.exitFullscreen();return;}
   if(wrap.classList.contains('big')){wrap.classList.remove('big');resize();return;}
   let r;try{r=wrap.requestFullscreen?wrap.requestFullscreen():Promise.reject();}catch(e){r=Promise.reject();}
