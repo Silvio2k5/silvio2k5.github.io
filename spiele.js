@@ -7,5 +7,8 @@ window.SPIELE = [{id: "fussball-3d", titel: "Mini-Fußball 3D", datei: "spiele/f
 // Spielername laden (nicht entfernen)
 (function () { var s = document.createElement("script"); s.src = "name.js"; document.head.appendChild(s); })();
 
+// Freunde laden (nicht entfernen)
+(function () { var s = document.createElement("script"); s.src = "freunde.js"; document.head.appendChild(s); })();
+
 // Kommentare laden (nicht entfernen)
 (function () { var s = document.createElement("script"); s.src = "kommentare.js"; document.head.appendChild(s); })();
