@@ -90,6 +90,7 @@
   .kb-art{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;border-radius:99px;padding:1px 8px;border:1px solid}
   .kb-art.r{color:var(--coin);border-color:rgba(255,181,71,.45)}
   .kb-art.v{color:#8fc8ff;border-color:rgba(143,200,255,.45)}
+  .kb-art.i{color:#7fe0a0;border-color:rgba(127,224,160,.45)}
   .kb-text{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px}
   .kb-ans{border-left:3px solid var(--coin);padding:6px 10px;background:rgba(255,181,71,.07);border-radius:0 8px 8px 0;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
   .kb-ans b{display:block;font-size:12px;color:var(--coin);margin-bottom:2px}
@@ -107,7 +108,7 @@
   function bereichBauen(box, bereich, art) {
     const S = { liste: null, fehler: false, filter: "", alle: false, typ: "rezension", sterne: 0, meinH: "", senden: false, msg: "", ok: false };
     const titel = art === "site"
-      ? `<div><h2>💬 Feedback zur Spielbibliothek</h2><p class="kb-sub">Wie gefällt dir die Website? Was sollen wir verbessern?</p></div>`
+      ? `<div><h2>💬 Feedback zur Spielbibliothek</h2><p class="kb-sub">Wie gefällt dir die Website? Was sollen wir verbessern? Welches Spiel wünschst du dir?</p></div>`
       : `<div><h3>💬 Rezensionen &amp; Vorschläge</h3></div>`;
     box.classList.add("kb", art === "site" ? "kb-site" : "kb-detail");
     box.innerHTML = `<div class="kb-head">${titel}<div class="kb-avg" data-kavg></div></div>
@@ -115,6 +116,7 @@
         <div class="kb-seg" role="group" aria-label="Art des Beitrags">
           <button type="button" data-ktyp="rezension" class="on">★ Rezension</button>
           <button type="button" data-ktyp="vorschlag">💡 Verbesserungsvorschlag</button>
+          ${art === "site" ? `<button type="button" data-ktyp="spielidee">🎮 Spielidee</button>` : ""}
         </div>
         <div class="kb-stars" data-kstars role="group" aria-label="Sterne vergeben">
           ${[1, 2, 3, 4, 5].map(i => `<button type="button" data-kstern="${i}" aria-label="${i} Stern${i > 1 ? "e" : ""}">★</button>`).join("")}<span data-ksl>Tippe auf die Sterne</span>
@@ -145,7 +147,9 @@
       $("[data-kstars]").hidden = S.typ !== "rezension";
       box.querySelectorAll("[data-kstern]").forEach(b => b.classList.toggle("on", +b.dataset.kstern <= S.sterne));
       $("[data-ksl]").textContent = S.sterne ? ["", "Schlecht", "Geht so", "Okay", "Gut", "Super!"][S.sterne] : "Tippe auf die Sterne";
-      textIn.placeholder = S.typ === "rezension" ? "Was gefällt dir? Was nicht?" : "Was sollen wir verbessern oder neu einbauen?";
+      textIn.placeholder = S.typ === "rezension" ? "Was gefällt dir? Was nicht?"
+        : S.typ === "spielidee" ? "Welches Spiel wünschst du dir? Beschreib kurz, wie es funktionieren soll."
+        : "Was sollen wir verbessern oder neu einbauen?";
       const mine = eigeneRez();
       $("[data-knote]").textContent = S.typ === "rezension" && mine
         ? "Du hast hier schon eine Rezension geschrieben. Wenn du absendest, wird sie ersetzt."
@@ -158,11 +162,11 @@
       const L = S.liste, liste = $("[data-klist]"), filt = $("[data-kfilter]"), avg = $("[data-kavg]");
       if (S.fehler) { liste.innerHTML = `<div class="kb-leer">Die Beiträge konnten gerade nicht geladen werden. Versuch es später noch einmal.</div>`; filt.innerHTML = ""; avg.innerHTML = ""; return; }
       if (!L) return;
-      const rez = L.filter(k => k.art === "rezension" && k.sterne), vor = L.filter(k => k.art === "vorschlag");
+      const rez = L.filter(k => k.art === "rezension" && k.sterne), vor = L.filter(k => k.art === "vorschlag"), ide = L.filter(k => k.art === "spielidee");
       avg.innerHTML = rez.length
         ? `<b>${zahl(rez.reduce((a, k) => a + k.sterne, 0) / rez.length)}</b>${sterne(rez.reduce((a, k) => a + k.sterne, 0) / rez.length)}<span>${rez.length} ${rez.length === 1 ? "Bewertung" : "Bewertungen"}</span>`
         : "";
-      filt.innerHTML = L.length ? [["", "Alle", L.length], ["rezension", "Rezensionen", rez.length], ["vorschlag", "Vorschläge", vor.length]]
+      filt.innerHTML = L.length ? [["", "Alle", L.length], ["rezension", "Rezensionen", rez.length], ["vorschlag", "Vorschläge", vor.length], ...(art === "site" || ide.length ? [["spielidee", "Spielideen", ide.length]] : [])]
         .map(([k, t, n]) => `<button type="button" class="chip ${S.filter === k ? "on" : ""}" data-kfilt="${k}">${t} · ${n}</button>`).join("") : "";
       const sicht = L.filter(k => !S.filter || k.art === S.filter);
       if (!sicht.length) { liste.innerHTML = `<div class="kb-leer">${L.length ? "Hier gibt es noch nichts." : "Noch keine Beiträge – schreib den ersten!"}</div>`; return; }
@@ -171,7 +175,7 @@
         const me = S.meinH && k.kennung === S.meinH;
         return `<article class="kb-item${me ? " me" : ""}">
           <div class="kb-meta"><span class="n">${esc(k.name)}${me ? " (du)" : ""}</span>
-            ${k.art === "rezension" ? (k.sterne ? sterne(k.sterne) : "") + `<span class="kb-art r">Rezension</span>` : `<span class="kb-art v">Vorschlag</span>`}
+            ${k.art === "rezension" ? (k.sterne ? sterne(k.sterne) : "") + `<span class="kb-art r">Rezension</span>` : k.art === "spielidee" ? `<span class="kb-art i">Spielidee</span>` : `<span class="kb-art v">Vorschlag</span>`}
             <span>${esc(datum(k.erstellt))}</span>
             ${me ? `<button type="button" class="kb-del" data-kdel="${Number(k.id)}">Löschen</button>` : ""}</div>
           <p class="kb-text">${esc(k.text)}</p>
