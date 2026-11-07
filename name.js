@@ -178,16 +178,44 @@
     b.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="lbl">${esc(n || "Name")}</span>`;
   }
 
-  // ---------- Gespielte Zeit pro Spiel (wird auf diesem Gerät gezählt) ----------
+  // ---------- Gespielte Zeit pro Spiel (pro Spieler-Konto, über alle Geräte) ----------
+  // Lokal werden nur noch nicht übertragene Sekunden gemerkt ("sb-zeit"), die Summe liegt in Supabase.
   const ZK = "sb-zeit";
-  function zeiten() { try { const v = JSON.parse(ls.get(ZK) || "{}"); return v && typeof v === "object" ? v : {}; } catch (_) { return {}; } }
+  let server = null;   // { spiel: sekunden } vom Server
+  function offen_() { try { const v = JSON.parse(ls.get(ZK) || "{}"); return v && typeof v === "object" ? v : {}; } catch (_) { return {}; } }
+  function zeiten() { const z = Object.assign({}, server || {}), o = offen_(); for (const k in o) z[k] = (Number(z[k]) || 0) + (Number(o[k]) || 0); return z; }
   function dauer(sek) {
     sek = Math.floor(sek || 0);
     if (sek < 60) return sek > 0 ? "< 1 Min" : "0 Min";
     const h = Math.floor(sek / 3600), m = Math.floor(sek % 3600 / 60);
     return h ? h + " Std " + String(m).padStart(2, "0") + " Min" : m + " Min";
   }
-  let laeuft = null, letzt = 0;
+  async function zeitLaden() {
+    try {
+      const r = await fetch(URL_ + "/rest/v1/rpc/zeit_laden", { method: "POST", headers: H, body: JSON.stringify({ p_spieler: spielerId() }) });
+      if (r.ok) { const d = await r.json(); server = d && typeof d === "object" ? d : {}; }
+    } catch (_) {}
+    if (pop) profilZeichnen();
+  }
+  let sendet = false;
+  async function zeitSenden(keep) {
+    if (sendet) return;
+    const o = offen_(), jobs = Object.keys(o).filter(k => /^[a-z0-9-]{1,40}$/.test(k) && Math.floor(o[k]) >= 1);
+    if (!jobs.length) return;
+    sendet = true;
+    for (const k of jobs) {
+      const sek = Math.floor(o[k]);
+      try {
+        const r = await fetch(URL_ + "/rest/v1/rpc/zeit_melden", { method: "POST", headers: H, keepalive: !!keep, body: JSON.stringify({ p_spieler: spielerId(), p_spiel: k, p_sek: sek }) });
+        if (!r.ok) { if (r.status === 400) { const n = offen_(); delete n[k]; ls.set(ZK, JSON.stringify(n)); } continue; }
+        const n = offen_(); n[k] = Math.max(0, (Number(n[k]) || 0) - sek); if (n[k] < 0.05) delete n[k]; ls.set(ZK, JSON.stringify(n));
+        const neu = Number(await r.json()); if (server && isFinite(neu)) server[k] = neu;
+      } catch (_) {}
+    }
+    sendet = false;
+    if (pop) profilZeichnen();
+  }
+  let laeuft = null, letzt = 0, seit = 0;
   // merken, welches Spiel gestartet wurde (Spielen-Knopf auf Karte, Banner oder in den Details)
   document.addEventListener("click", e => {
     const p = e.target.closest && e.target.closest("[data-play]");
@@ -198,38 +226,48 @@
     const pl = document.getElementById("player"), jetzt = Date.now();
     const aktiv = pl && !pl.hidden && laeuft && document.visibilityState === "visible";
     if (aktiv && letzt) {
-      const z = zeiten();
-      z[laeuft] = Math.round(((Number(z[laeuft]) || 0) + Math.min(5, (jetzt - letzt) / 1000)) * 10) / 10;
+      const z = offen_(), d = Math.min(5, (jetzt - letzt) / 1000);
+      z[laeuft] = Math.round(((Number(z[laeuft]) || 0) + d) * 10) / 10;
       ls.set(ZK, JSON.stringify(z));
+      seit += d;
+      if (seit >= 60) { seit = 0; zeitSenden(); }   // jede Minute übertragen
     }
-    if (pl && pl.hidden) laeuft = null;   // Spiel geschlossen
+    if (pl && pl.hidden) { if (laeuft) zeitSenden(); laeuft = null; }   // Spiel geschlossen
     letzt = aktiv ? jetzt : 0;
   }, 1000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") zeitSenden(true); });
+  addEventListener("pagehide", () => zeitSenden(true));
 
   // ---------- Profil-Fenster am Namensknopf ----------
   let pop = null;
   function profilZu() { if (pop) { pop.remove(); pop = null; } }
-  function profil() {
-    if (pop) { profilZu(); return; }
+  function profilZeichnen() {
+    if (!pop) return;
     const n = getName();
-    if (!n) { fenster(true); return; }
-    const b = document.getElementById("nameBtn"), r = b.getBoundingClientRect();
     const z = zeiten(), spiele = (Array.isArray(window.SPIELE) ? window.SPIELE : []).map(g => ({ id: String(g.id || ""), t: String(g.titel || "Spiel") }));
     for (const id in z) if (!spiele.some(g => g.id === id) && z[id] >= 1) spiele.push({ id, t: id });
     spiele.forEach(g => g.s = Number(z[g.id]) || 0);
     spiele.sort((a, c) => c.s - a.s || a.t.localeCompare(c.t, "de"));
     const sum = spiele.reduce((a, g) => a + g.s, 0), max = Math.max(1, ...spiele.map(g => g.s));
+    pop.innerHTML = `<div class="pp-head"><div class="pp-av">${esc(n.charAt(0).toUpperCase())}</div><div><b>${esc(n)}</b><span>Dein Spielername</span></div></div>
+      <button class="btn sm" type="button" data-ppname>✏️ Namen ändern</button>
+      <div class="pp-lbl"><span>Gespielte Zeit</span><b>${server ? esc(dauer(sum)) : "…"}</b></div>
+      <div class="pp-list">${spiele.length ? spiele.map(g => `<div class="pp-row"><div><span>${esc(g.t)}</span><span>${server ? esc(dauer(g.s)) : "…"}</span></div><div class="pp-bar"><i style="width:${(g.s / max * 100).toFixed(1)}%"></i></div></div>`).join("") : `<div class="pp-leer">Noch keine Spiele.</div>`}</div>
+      <div class="pp-note">Gezählt wird, solange ein Spiel offen ist – zusammen auf allen Geräten mit deinem Spielstand.</div>`;
+    pop.querySelector("[data-ppname]").addEventListener("click", () => { profilZu(); fenster(false); });
+  }
+  function profil() {
+    if (pop) { profilZu(); return; }
+    const n = getName();
+    if (!n) { fenster(true); return; }
+    const b = document.getElementById("nameBtn"), r = b.getBoundingClientRect();
     pop = document.createElement("div");
     pop.className = "pp"; pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", "Profil");
     pop.style.top = (r.bottom + 8) + "px";
     pop.style.right = Math.max(12, innerWidth - r.right) + "px";
-    pop.innerHTML = `<div class="pp-head"><div class="pp-av">${esc(n.charAt(0).toUpperCase())}</div><div><b>${esc(n)}</b><span>Dein Spielername</span></div></div>
-      <button class="btn sm" type="button" data-ppname>✏️ Namen ändern</button>
-      <div class="pp-lbl"><span>Gespielte Zeit</span><b>${esc(dauer(sum))}</b></div>
-      <div class="pp-list">${spiele.length ? spiele.map(g => `<div class="pp-row"><div><span>${esc(g.t)}</span><span>${esc(dauer(g.s))}</span></div><div class="pp-bar"><i style="width:${(g.s / max * 100).toFixed(1)}%"></i></div></div>`).join("") : `<div class="pp-leer">Noch keine Spiele.</div>`}</div>
-      <div class="pp-note">Gezählt wird auf diesem Gerät, solange ein Spiel offen ist.</div>`;
     document.body.appendChild(pop);
-    pop.querySelector("[data-ppname]").addEventListener("click", () => { profilZu(); fenster(false); });
+    profilZeichnen();
+    zeitSenden().then(zeitLaden);
   }
   document.addEventListener("mousedown", e => { if (pop && !pop.contains(e.target) && !e.target.closest("#nameBtn")) profilZu(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape") profilZu(); });
@@ -240,6 +278,7 @@
 
   function start() {
     knopf();
+    zeitSenden().then(zeitLaden);
     const n = getName();
     if (!n) { fenster(true); return; }
     // Wer schon einen Namen hat: einmal zentral eintragen. Ist er vergeben oder nicht erlaubt, muss ein neuer her.
