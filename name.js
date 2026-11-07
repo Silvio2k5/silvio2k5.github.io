@@ -60,6 +60,8 @@
   .nm .alt{border-top:1px solid var(--line);padding-top:12px;font-size:13px;color:var(--dim);display:flex;flex-direction:column;gap:8px}
   .nm .alt input{font-family:var(--mono);letter-spacing:3px;text-transform:uppercase;text-align:center;font-size:18px}
   .nm .ok{color:#7fe0a0}
+  .nm .code{font:bold 26px var(--mono);letter-spacing:3px;color:var(--coin);min-height:34px}
+  .nm .stp{font-weight:700;font-size:14px;color:var(--paper)}
   #nameBtn{flex:none;max-width:180px}
   #nameBtn span{overflow:hidden;text-overflow:ellipsis}
   .kb-wer{font-size:13px;color:var(--dim)}
@@ -162,6 +164,82 @@
     }
   }
 
+  // ---------- Spielstand übertragen (Code erstellen / Code eingeben) ----------
+  function uebertragen() {
+    if (offen) return; offen = true;
+    const back = document.createElement("div");
+    back.className = "nm-back";
+    back.innerHTML = `<div class="nm" role="dialog" aria-modal="true" aria-labelledby="suT">
+      <div class="ic">📲</div>
+      <h2 id="suT">Spielstand übertragen</h2>
+      <p>Nimm deinen Namen, deine Spielzeit und deinen Spielstand auf ein anderes Gerät mit – zum Beispiel vom PC aufs Handy.</p>
+      <div class="stp">1. Auf diesem Gerät: Code erstellen</div>
+      <div class="row" style="justify-content:space-between;align-items:center"><span class="code" id="suCode">– – – –</span><button class="btn sm" type="button" id="suMake">Code erstellen</button></div>
+      <div class="hint" id="suMakeSt">Der Code gilt 24 Stunden und nur einmal.</div>
+      <div class="alt">
+        <div class="stp">2. Auf dem anderen Gerät: Code eingeben</div>
+        <div class="row" style="justify-content:stretch"><input id="suIn" maxlength="9" placeholder="XXXX-XXXX" autocomplete="off" spellcheck="false" style="flex:1"><button class="btn" type="button" id="suLoad">Laden</button></div>
+        <div class="err" id="suErr"></div>
+        <div class="hint">Achtung: Der Spielstand auf dem Gerät, auf dem du den Code eingibst, wird dabei ersetzt.</div>
+      </div>
+      <div class="row"><button class="btn primary" type="button" id="suX">Fertig</button></div>
+    </div>`;
+    document.body.appendChild(back);
+    const $ = s => back.querySelector(s);
+    const zu = () => { back.remove(); offen = false; };
+    $("#suX").addEventListener("click", zu);
+    back.addEventListener("mousedown", e => { if (e.target === back) zu(); });
+    back.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Escape") zu(); if (e.key === "Enter" && e.target.id === "suIn") laden(); });
+
+    let code = "";
+    $("#suMake").addEventListener("click", async () => {
+      const b = $("#suMake"), st = $("#suMakeSt");
+      if (code) {   // zweiter Klick: kopieren
+        try { await navigator.clipboard.writeText(code); st.className = "hint ok"; st.textContent = "Kopiert! Jetzt auf dem anderen Gerät eingeben."; } catch (_) {}
+        return;
+      }
+      b.disabled = true; st.className = "hint"; st.textContent = "Erstelle Code …";
+      await zeitSenden();
+      const d = { v: 1 }; for (const k of SY_KEYS) { const v = ls.get(k); if (v !== null) d[k] = v; }
+      try {
+        const r = await fetch(URL_ + "/rest/v1/rpc/spielstand_speichern", { method: "POST", headers: H, body: JSON.stringify({ p_daten: d }) });
+        if (!r.ok) throw 0;
+        const c = String(await r.json());
+        code = c.slice(0, 4) + "-" + c.slice(4);
+        $("#suCode").textContent = code;
+        b.disabled = false; b.textContent = "Kopieren";
+        st.className = "hint ok"; st.textContent = "Gib diesen Code auf dem anderen Gerät ein. Er gilt 24 Stunden und nur einmal.";
+      } catch (_) { b.disabled = false; st.className = "err"; st.textContent = FEHLER.netz; }
+    });
+
+    const inp = $("#suIn");
+    let scharf = false;
+    inp.addEventListener("input", () => {
+      scharf = false; $("#suLoad").textContent = "Laden";
+      const c = inp.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8); inp.value = c.length > 4 ? c.slice(0, 4) + "-" + c.slice(4) : c;
+    });
+    $("#suLoad").addEventListener("click", laden);
+    async function laden() {
+      const b = $("#suLoad"), er = $("#suErr"), c = inp.value.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+      er.className = "err";
+      if (c.length !== 8) { er.textContent = "Der Code hat 8 Zeichen, z. B. K7XQ-P2MD."; return; }
+      if (!scharf) { scharf = true; b.textContent = "Ja, ersetzen"; er.textContent = "Dein Spielstand auf diesem Gerät wird überschrieben. Nochmal tippen zum Bestätigen."; return; }
+      b.disabled = true; er.textContent = "Lade …";
+      try {
+        const r = await fetch(URL_ + "/rest/v1/rpc/spielstand_laden", { method: "POST", headers: H, body: JSON.stringify({ p_code: c }) });
+        if (!r.ok) throw 0;
+        const d = await r.json();
+        if (!d || typeof d !== "object" || d.v !== 1) { b.disabled = false; scharf = false; b.textContent = "Laden"; er.textContent = "Code ungültig, abgelaufen oder schon benutzt."; return; }
+        await zeitSenden();
+        for (const k of SY_KEYS) { if (typeof d[k] === "string") ls.set(k, d[k]); else ls.del(k); }
+        for (const k of Object.keys(localStorage)) if (k.startsWith("bl-gemeldet-")) ls.del(k);
+        ls.del("sb-name-ok");
+        er.className = "err ok"; er.textContent = "Spielstand geladen! Starte neu …";
+        setTimeout(() => location.reload(), 800);
+      } catch (_) { b.disabled = false; er.textContent = FEHLER.netz; }
+    }
+  }
+
   // ---------- Knopf oben in der Leiste ----------
   function knopf() {
     const top = document.querySelector(".topin"); if (!top) return;
@@ -251,10 +329,12 @@
     const sum = spiele.reduce((a, g) => a + g.s, 0), max = Math.max(1, ...spiele.map(g => g.s));
     pop.innerHTML = `<div class="pp-head"><div class="pp-av">${esc(n.charAt(0).toUpperCase())}</div><div><b>${esc(n)}</b><span>Dein Spielername</span></div></div>
       <button class="btn sm" type="button" data-ppname>✏️ Namen ändern</button>
+      <button class="btn sm" type="button" data-ppsync>📲 Spielstand übertragen</button>
       <div class="pp-lbl"><span>Gespielte Zeit</span><b>${server ? esc(dauer(sum)) : "…"}</b></div>
       <div class="pp-list">${spiele.length ? spiele.map(g => `<div class="pp-row"><div><span>${esc(g.t)}</span><span>${server ? esc(dauer(g.s)) : "…"}</span></div><div class="pp-bar"><i style="width:${(g.s / max * 100).toFixed(1)}%"></i></div></div>`).join("") : `<div class="pp-leer">Noch keine Spiele.</div>`}</div>
       <div class="pp-note">Gezählt wird, solange ein Spiel offen ist – zusammen auf allen Geräten mit deinem Spielstand.</div>`;
     pop.querySelector("[data-ppname]").addEventListener("click", () => { profilZu(); fenster(false); });
+    pop.querySelector("[data-ppsync]").addEventListener("click", () => { profilZu(); uebertragen(); });
   }
   function profil() {
     if (pop) { profilZu(); return; }
