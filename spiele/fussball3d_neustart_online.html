@@ -162,7 +162,7 @@ const OPP=[
 ];
 let state='menu',score=[0,0],time=90,pause=0,cd=0,stuck=0,mcd=0,pcd=0,tour=false,round=0,golden=false,endKind='',aT=0,aex=0,aey=0,opp=OPP[2],paused=false,menuSel=0,qd=2;
 const me={x:200,y:H/2,r:16,vx:0,vy:0},cpu={x:600,y:H/2,r:16,vx:0,vy:0},ball={x:W/2,y:H/2,r:9,vx:0,vy:0};
-let streakAt=-1,played=0;
+let streakAt=-1,played=0,bst=0,bax=0,bay=0;
 const STREAK_CHANCE=0.02,fl={on:false,x:0,y:0,r:15,vx:0,vy:0,kx:0,ky:0,stun:0,t:0,cd:0};
 
 /* ---------- Szene ---------- */
@@ -724,7 +724,7 @@ msg.addEventListener('click',e=>{
   const nb=e.target.closest('button[data-n]');
   if(nb&&state==='menu'){changeNum(+nb.dataset.n);return;}
   const b=e.target.closest('button[data-i]');if(b&&state==='menu'){menuSel=+b.dataset.i;activate();}});
-function reset(){me.x=200;me.y=H/2;cpu.x=600;cpu.y=H/2;ball.x=W/2;ball.y=H/2;ball.vx=ball.vy=0;me.vx=me.vy=cpu.vx=cpu.vy=0;me.kx=me.ky=cpu.kx=cpu.ky=0;me.stun=cpu.stun=0;me.burn=cpu.burn=0;me.slipped=cpu.slipped=false;}
+function reset(){me.x=200;me.y=H/2;cpu.x=600;cpu.y=H/2;ball.x=W/2;ball.y=H/2;ball.vx=ball.vy=0;me.vx=me.vy=cpu.vx=cpu.vy=0;me.kx=me.ky=cpu.kx=cpu.ky=0;me.stun=cpu.stun=0;me.burn=cpu.burn=0;me.slipped=cpu.slipped=false;cpu.esc=0;cpu.st=cpu.mv=0;cpu.ax=undefined;bst=0;bax=ball.x;bay=ball.y;}
 function startMatch(){
   fl.on=false;done0=doneCount();unlockMsg='';played=0;streakAt=!ON.on&&Math.random()<STREAK_CHANCE?Math.random()*90:-1;paused=false;score=[0,0];time=90;golden=false;pause=0;reset();
   opp=ON.on?{n:ON.oppName,col:ON.oppCol,sp:230,sh:560,kick:0.6,cdv:0.5,err:0,lvl:-1}:(wmOn?wmOpp:lg?lgOpp:(tour?OPP[round]:OPP[qd]));cm.children[0].material.color.set(opp.col);teamColors();setNumber(ON.on?ON.oppNum:Math.floor(Math.random()*10));if(!tour||round===0)setSky(Math.floor(Math.random()*3));pyro.on=false;{const r=Math.random();if(r<0.05)pyroStart(true);else if(r<0.15)pyroStart(false);}state='play';
@@ -1031,6 +1031,24 @@ function shoot(p,power){
   if(d<p.r+ball.r+8){contact(p);if(p.slipped||p.burn>0)return false;ball.vx=dx/d*power;ball.vy=dy/d*power;return true;}
   return false;
 }
+/* Bot steckt fest? Alle 0,6 s wird geprüft, ob er sich trotz Laufen kaum bewegt hat (z. B. in der Ecke).
+   Dann dreht er um und läuft kurz Richtung Feldmitte (leicht seitlich), bevor er den Ball neu anläuft. */
+function botStuck(p,dt,moving){
+  if((p.esc||0)>0){p.esc-=dt;return p.esc>0;}
+  p.st=(p.st||0)+dt;if(moving)p.mv=(p.mv||0)+dt;
+  if(p.ax===undefined){p.ax=p.x;p.ay=p.y;}
+  if(p.st>=0.6){
+    const nw=o=>o.x<60||o.x>W-60||o.y<60||o.y>H-60;
+    const d=Math.hypot(p.x-p.ax,p.y-p.ay);
+    if(d<10&&(p.mv||0)>0.45&&!((p.stun||0)>0)&&!((p.burn||0)>0)&&(nw(p)||nw(ball))){
+      let ex=W/2-p.x,ey=H/2-p.y;const l=Math.hypot(ex,ey)||1;ex/=l;ey/=l;
+      const s=Math.random()<0.5?-1:1;
+      p.ex=ex-ey*s*0.6;p.ey=ey+ex*s*0.6;p.esc=0.6+Math.random()*0.3;
+    }
+    p.st=0;p.mv=0;p.ax=p.x;p.ay=p.y;
+  }
+  return (p.esc||0)>0;
+}
 function ai(dt){
   let ax=ball.x,ay=ball.y-H/2;const l=Math.hypot(ax,ay)||1;ax/=l;ay/=l;
   aT-=dt;if(aT<=0){aT=0.4;aex=(Math.random()-0.5)*2*opp.err;aey=(Math.random()-0.5)*2*opp.err;}
@@ -1038,6 +1056,7 @@ function ai(dt){
   if(cpu.x>ball.x+8&&Math.abs(cpu.y-ball.y)<34){tx=ball.x;ty=ball.y;}
   if(tx<cpu.r||tx>W-cpu.r||ty<cpu.r||ty>H-cpu.r){tx=ball.x;ty=ball.y;}
   const dx=tx-cpu.x,dy=ty-cpu.y,near=Math.hypot(dx,dy)<4;
+  if(botStuck(cpu,dt,!near)){move(cpu,cpu.ex,cpu.ey,opp.sp,dt);cd-=dt;pcd-=dt;return;}
   move(cpu,near?0:dx,near?0:dy,opp.sp,dt);
   cd-=dt;
   if(cd<=0&&cpu.x>ball.x&&shoot(cpu,opp.sh))cd=opp.cdv;
@@ -1045,7 +1064,7 @@ function ai(dt){
 }
 function spawnFl(){
   fl.on=true;fl.inF=false;fl.t=0;fl.x=150+Math.random()*500;fl.y=Math.random()<0.5?-18:H+18;
-  fl.vx=fl.vy=fl.kx=fl.ky=0;fl.stun=0;fl.burn=0;fl.slipped=false;fl.cd=0;
+  fl.vx=fl.vy=fl.kx=fl.ky=0;fl.stun=0;fl.burn=0;fl.slipped=false;fl.cd=0;fl.esc=0;fl.st=fl.mv=0;fl.ax=undefined;
   flm.children[0].material.color.set(Math.random()<0.5?homeCol:opp.col);
 }
 function flUpdate(dt){
@@ -1057,6 +1076,7 @@ function flUpdate(dt){
   const dx=tx-fl.x,dy=ty-fl.y,d=Math.hypot(dx,dy);
   if((fl.burn||0)>0){fl.burn-=dt;fl.ba=(fl.ba||0)+dt*6;fl.vx=Math.cos(fl.ba)*190;fl.vy=Math.sin(fl.ba)*190;}
   else if(fl.stun>0){fl.stun-=dt;fl.vx=fl.vy=0;}
+  else if(!leaving&&botStuck(fl,dt,d>6)){const l=Math.hypot(fl.ex,fl.ey)||1;fl.vx=fl.ex/l*sp;fl.vy=fl.ey/l*sp;}
   else if(d>6){fl.vx=dx/d*sp;fl.vy=dy/d*sp;}
   else fl.vx=fl.vy=0;
   fl.x+=(fl.vx+fl.kx)*dt;fl.y+=(fl.vy+fl.ky)*dt;
@@ -1077,7 +1097,7 @@ function flUpdate(dt){
   cl();
   touch(fl);
   fl.cd-=dt;
-  if(!leaving&&fl.cd<=0&&shoot(fl,320+Math.random()*260))fl.cd=0.5+Math.random()*0.5;
+  if(!leaving&&!(fl.esc>0)&&fl.cd<=0&&shoot(fl,320+Math.random()*260))fl.cd=0.5+Math.random()*0.5;
 }
 function update(dt){
   if(state!=='play'||paused)return;
@@ -1093,7 +1113,10 @@ function update(dt){
   const f=Math.exp(-0.9*dt);ball.vx*=f;ball.vy*=f;
   const nearWall=ball.x<45||ball.x>W-45||ball.y<45||ball.y>H-45;
   if(Math.hypot(ball.vx,ball.vy)<20&&nearWall)stuck+=dt;else stuck=0;
-  if(stuck>1.5){const d=Math.hypot(W/2-ball.x,H/2-ball.y)||1;ball.vx=(W/2-ball.x)/d*300;ball.vy=(H/2-ball.y)/d*300;stuck=0;}
+  // Ball klemmt an der Wand/Ecke fest, obwohl jemand dagegen drückt (Tempo hoch, aber keine Bewegung)
+  bst+=dt;
+  if(bst>=1.2){if(nearWall&&Math.hypot(ball.x-bax,ball.y-bay)<18)stuck=2;bst=0;bax=ball.x;bay=ball.y;}
+  if(stuck>1.5){const d=Math.hypot(W/2-ball.x,H/2-ball.y)||1;ball.vx=(W/2-ball.x)/d*300;ball.vy=(H/2-ball.y)/d*300;stuck=0;bst=0;bax=ball.x;bay=ball.y;}
   mcd-=dt;
   if(keys.Space){
     shoot(me,560);
