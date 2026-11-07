@@ -65,13 +65,33 @@ const BL_SPIELE = {
                   } catch (_) { meinHash = ""; }
                   return meinHash;
         }
+        // Lädt alle Einträge (mit Tore, Pokale, höchster Sieg, Serie, falls die Datenbank sie liefert). Sortiert wird je Statistik hier im Browser.
         async function laden(spiel) {
-                  const u = BL_URL.replace(/\/$/, "") + "/rest/v1/rangliste?select=name,siege,kennung&spiel=eq." + encodeURIComponent(spiel) +
-                              "&order=siege.desc,aktualisiert.asc&limit=10";
-                  const r = await fetch(u, { headers: headers() });
+                  const basis = BL_URL.replace(/\/$/, "") + "/rest/v1/rangliste?spiel=eq." + encodeURIComponent(spiel) + "&order=siege.desc,aktualisiert.asc&limit=1000&select=";
+                  let r = await fetch(basis + "name,siege,kennung,tore,pokale,hoechster_sieg,serie", { headers: headers() });
+                  if (!r.ok) r = await fetch(basis + "name,siege,kennung", { headers: headers() });
                   if (!r.ok) throw new Error("laden " + r.status);
                   return r.json();
         }
+
+   // ---------- Ranglisten je Statistik ----------
+   const sieg = t => { const m = /^\s*(\d+)\s*:\s*(\d+)/.exec(t || ""); return m ? [+m[1] - +m[2], +m[1]] : [-1, -1]; };
+   const KAT = [
+             { id: "siege", t: "Siege", wert: e => Number(e.siege) || 0, text: v => v + (v === 1 ? " Sieg" : " Siege") },
+             { id: "tore", t: "Tore", wert: e => Number(e.tore) || 0, text: v => v + (v === 1 ? " Tor" : " Tore") },
+             { id: "pokale", t: "Pokale", wert: e => Number(e.pokale) || 0, text: v => v + (v === 1 ? " Pokal" : " Pokale") },
+             { id: "sieg", t: "Höchster Sieg", wert: e => sieg(e.hoechster_sieg), text: (v, e) => e.hoechster_sieg ? esc(e.hoechster_sieg) : "–" },
+             { id: "serie", t: "Siegesserie", wert: e => Number(e.serie) || 0, text: v => v + (v === 1 ? " Sieg" : " Siege") + " in Folge" }
+   ];
+   let kat = "siege";
+   function rangliste(liste, id) {
+             const k = KAT.find(x => x.id === id) || KAT[0];
+             const vgl = (a, b) => { const x = k.wert(a), y = k.wert(b); return Array.isArray(x) ? (y[0] - x[0] || y[1] - x[1]) : y - x; };
+             // ohne Wert (0 bzw. kein Sieg) nicht anzeigen, außer bei Siegen; bei Gleichstand entscheiden die Siege
+             return liste.filter(e => { const v = k.wert(e); return k.id === "siege" || (Array.isArray(v) ? v[0] >= 0 : v > 0); })
+                         .map((e, i) => [e, i]).sort((a, b) => vgl(a[0], b[0]) || (Number(b[0].siege) || 0) - (Number(a[0].siege) || 0) || a[1] - b[1])
+                         .slice(0, 10).map(x => x[0]);
+   }
 
    // ---------- Darstellung ----------
    const css = document.createElement("style");
@@ -92,7 +112,18 @@ const BL_SPIELE = {
                                     .bl input:focus{border-color:var(--coin)}
                                       .bl .info{font-size:12px;color:var(--dim);margin-top:10px}
                                         .bl .leer{color:var(--dim);font-size:15px;padding:6px 0}
-                                          .bl .err{color:var(--danger);font-size:13px;margin-top:6px}`;
+                                          .bl .err{color:var(--danger);font-size:13px;margin-top:6px}
+          .bl .bltabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+          .bl .bltabs button{flex:none;height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--dim);font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer}
+          .bl .bltabs button.on{background:var(--coin);border-color:var(--coin);color:var(--coin-ink)}
+          .bl .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+          .bl table.blx{font-size:14px}
+          .bl table.blx td{padding:8px 3px}
+          .bl table.blx th{font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--dim);font-weight:400;text-align:right;padding:0 3px 6px;white-space:nowrap}
+          .bl table.blx th.l{text-align:left}
+          .bl table.blx td.n{text-align:right;white-space:nowrap;color:var(--paper)}
+          .bl table.blx tr.me td.n{color:var(--coin)}
+          .bl table.blx td.blnm{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}`;
         document.head.appendChild(css);
 
    const ICON_X = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
@@ -104,14 +135,22 @@ const BL_SPIELE = {
              const kennung = await eigeneKennung();
              const render = (liste, fehler, hinweis) => {
                          const name = getName();
-                         const rows = (liste || []).map((e, i) => {
-                                       const p = i < 3 ? `<span class="medal m${i + 1}">${i + 1}</span>` : (i + 1) + ".";
-                                       const me = kennung && e.kennung === kennung ? " me" : "";
-                                       return `<tr class="${me}"><td class="p">${p}</td><td>${esc(e.name)}</td><td class="s">${Number(e.siege) || 0} ${(Number(e.siege) || 0) === 1 ? "Sieg" : "Siege"}</td></tr>`;
-                         }).join("");
+                         const alle = liste || [];
+                         const extra = alle.some(e => e && "tore" in e);
+                         if (!extra) kat = "siege";
+                         const tabelle = () => {
+                                       const k = KAT.find(x => x.id === kat) || KAT[0];
+                                       const rows = rangliste(alle, kat).map((e, i) => {
+                                                       const p = i < 3 ? `<span class="medal m${i + 1}">${i + 1}</span>` : (i + 1) + ".";
+                                                       const me = kennung && e.kennung === kennung ? " me" : "";
+                                                       return `<tr class="${me}"><td class="p">${p}</td><td>${esc(e.name)}</td><td class="s">${k.text(k.wert(e), e)}</td></tr>`;
+                                       }).join("");
+                                       return rows ? `<table>${rows}</table>` : `<div class="leer">${alle.length ? "Hier hat noch niemand einen Eintrag." : "Noch keine Einträge – sei der Erste!"}</div>`;
+                         };
+                         const tabs = extra ? `<div class="bltabs" role="tablist">${KAT.map(k => `<button type="button" role="tab" data-blk="${k.id}" class="${k.id === kat ? "on" : ""}" aria-selected="${k.id === kat}">${k.t}</button>`).join("")}</div>` : "";
                          box.innerHTML = `
                                  ${fehler ? `<div class="err">Die Bestenliste konnte gerade nicht geladen werden. Versuch es später noch einmal.</div>` :
-                                             rows ? `<table>${rows}</table>` : `<div class="leer">Noch keine Einträge – sei der Erste!</div>`}
+                                             `${tabs}<div id="blListe">${tabelle()}</div>${extra && kat === "pokale" ? `<div class="info">Pokale = gewonnene Turniere, Ligen und Weltmeisterschaften</div>` : ""}`}
                                                      <div class="row">
                                                                <input id="blName" maxlength="16" placeholder="Dein Name für die Bestenliste" value="${esc(name)}" aria-label="Dein Name für die Bestenliste">
                                                                          <button class="btn sm" id="blSave" type="button">${name ? "Namen ändern" : "Mitmachen"}</button>
@@ -136,6 +175,14 @@ const BL_SPIELE = {
                                        }
                          };
                          btn.addEventListener("click", save);
+                         box.querySelectorAll("[data-blk]").forEach(b => b.addEventListener("click", () => {
+                                       kat = b.dataset.blk;
+                                       box.querySelectorAll("[data-blk]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", x === b); });
+                                       box.querySelector("#blListe").innerHTML = tabelle();
+                                       const inf = box.querySelector("#blListe").nextElementSibling;
+                                       if (inf && inf.classList.contains("info") && !inf.textContent.startsWith("Deine")) inf.remove();
+                                       if (kat === "pokale") box.querySelector("#blListe").insertAdjacentHTML("afterend", `<div class="info">Pokale = gewonnene Turniere, Ligen und Weltmeisterschaften</div>`);
+                         }));
                          inp.addEventListener("keydown", e => { if (e.key === "Enter") save(); if (e.key !== "Escape") e.stopPropagation(); });
              };
              box.innerHTML = `<div class="leer">Lade Bestenliste …</div>`;
@@ -149,7 +196,7 @@ const BL_SPIELE = {
              if (!root) return;
              const cfg = BL_SPIELE[spiel];
              root.innerHTML = `<div class="backdrop"><div class="modal small blmodal" role="dialog" aria-modal="true" aria-label="Bestenliste">
-                   <div class="mhead"><div><h2>🏆 Bestenliste</h2><div class="sub">${esc(titel || "")} · ${esc(cfg.titel)}</div></div>
+                   <div class="mhead"><div><h2>🏆 Bestenliste</h2><div class="sub">${esc(titel || "")} · weltweit</div></div>
                          <button class="x" data-blclose aria-label="Schließen">${ICON_X}</button></div>
                                <div class="scroll"><div class="mbody"><div class="bl"></div></div></div></div></div>`;
              const bd = root.firstElementChild;
