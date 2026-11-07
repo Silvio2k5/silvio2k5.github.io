@@ -64,6 +64,22 @@
   #nameBtn span{overflow:hidden;text-overflow:ellipsis}
   .kb-wer{font-size:13px;color:var(--dim)}
   .kb-wer b{color:var(--paper)}
+  .pp{position:fixed;z-index:60;width:min(320px,calc(100vw - 24px));background:var(--shelf);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px -16px rgba(0,0,0,.7);padding:16px;display:flex;flex-direction:column;gap:12px}
+  .pp-head{display:flex;align-items:center;gap:12px}
+  .pp-av{width:44px;height:44px;border-radius:50%;background:var(--coin);color:var(--coin-ink);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:20px;flex:none}
+  .pp-head b{font-family:var(--display);font-size:19px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+  .pp-head span{font-size:12px;color:var(--dim)}
+  .pp-lbl{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);display:flex;justify-content:space-between}
+  .pp-lbl b{color:var(--coin);font-family:var(--mono)}
+  .pp-list{display:flex;flex-direction:column;gap:10px;max-height:min(50vh,320px);overflow:auto}
+  .pp-row{display:flex;flex-direction:column;gap:4px;font-size:14px}
+  .pp-row div{display:flex;justify-content:space-between;gap:10px}
+  .pp-row div span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pp-row div span:last-child{font-variant-numeric:tabular-nums;color:var(--paper);font-weight:700;white-space:nowrap}
+  .pp-bar{height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}
+  .pp-bar i{display:block;height:100%;background:var(--coin);border-radius:2px}
+  .pp-leer{color:var(--dim);font-size:14px}
+  .pp-note{font-size:11px;color:var(--dim)}
   @media (max-width:760px){#nameBtn .lbl{display:none}#nameBtn{width:40px;padding:0}}`;
   document.head.appendChild(css);
 
@@ -153,16 +169,74 @@
     if (!b) {
       b = document.createElement("button");
       b.id = "nameBtn"; b.type = "button"; b.className = "btn";
-      b.addEventListener("click", () => fenster(false));
+      b.addEventListener("click", e => { e.stopPropagation(); profil(); });
       const s = top.querySelector(".search");
       if (s) s.after(b); else top.appendChild(b);
     }
     const n = getName();
-    b.title = n ? "Spielername: " + n + " (ändern)" : "Spielername wählen";
+    b.title = n ? "Profil von " + n + ": Spielzeit und Name" : "Spielername wählen";
     b.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span class="lbl">${esc(n || "Name")}</span>`;
   }
 
-  window.SB_NAME = { get: getName, aendern: () => fenster(false) };
+  // ---------- Gespielte Zeit pro Spiel (wird auf diesem Gerät gezählt) ----------
+  const ZK = "sb-zeit";
+  function zeiten() { try { const v = JSON.parse(ls.get(ZK) || "{}"); return v && typeof v === "object" ? v : {}; } catch (_) { return {}; } }
+  function dauer(sek) {
+    sek = Math.floor(sek || 0);
+    if (sek < 60) return sek > 0 ? "< 1 Min" : "0 Min";
+    const h = Math.floor(sek / 3600), m = Math.floor(sek % 3600 / 60);
+    return h ? h + " Std " + String(m).padStart(2, "0") + " Min" : m + " Min";
+  }
+  let laeuft = null, letzt = 0;
+  // merken, welches Spiel gestartet wurde (Spielen-Knopf auf Karte, Banner oder in den Details)
+  document.addEventListener("click", e => {
+    const p = e.target.closest && e.target.closest("[data-play]");
+    if (p) { laeuft = p.dataset.play; return; }
+    if (e.target.closest && e.target.closest("[data-dplay]")) laeuft = decodeURIComponent((location.hash || "").slice(1));
+  }, true);
+  setInterval(() => {
+    const pl = document.getElementById("player"), jetzt = Date.now();
+    const aktiv = pl && !pl.hidden && laeuft && document.visibilityState === "visible";
+    if (aktiv && letzt) {
+      const z = zeiten();
+      z[laeuft] = Math.round(((Number(z[laeuft]) || 0) + Math.min(5, (jetzt - letzt) / 1000)) * 10) / 10;
+      ls.set(ZK, JSON.stringify(z));
+    }
+    if (pl && pl.hidden) laeuft = null;   // Spiel geschlossen
+    letzt = aktiv ? jetzt : 0;
+  }, 1000);
+
+  // ---------- Profil-Fenster am Namensknopf ----------
+  let pop = null;
+  function profilZu() { if (pop) { pop.remove(); pop = null; } }
+  function profil() {
+    if (pop) { profilZu(); return; }
+    const n = getName();
+    if (!n) { fenster(true); return; }
+    const b = document.getElementById("nameBtn"), r = b.getBoundingClientRect();
+    const z = zeiten(), spiele = (Array.isArray(window.SPIELE) ? window.SPIELE : []).map(g => ({ id: String(g.id || ""), t: String(g.titel || "Spiel") }));
+    for (const id in z) if (!spiele.some(g => g.id === id) && z[id] >= 1) spiele.push({ id, t: id });
+    spiele.forEach(g => g.s = Number(z[g.id]) || 0);
+    spiele.sort((a, c) => c.s - a.s || a.t.localeCompare(c.t, "de"));
+    const sum = spiele.reduce((a, g) => a + g.s, 0), max = Math.max(1, ...spiele.map(g => g.s));
+    pop = document.createElement("div");
+    pop.className = "pp"; pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", "Profil");
+    pop.style.top = (r.bottom + 8) + "px";
+    pop.style.right = Math.max(12, innerWidth - r.right) + "px";
+    pop.innerHTML = `<div class="pp-head"><div class="pp-av">${esc(n.charAt(0).toUpperCase())}</div><div><b>${esc(n)}</b><span>Dein Spielername</span></div></div>
+      <button class="btn sm" type="button" data-ppname>✏️ Namen ändern</button>
+      <div class="pp-lbl"><span>Gespielte Zeit</span><b>${esc(dauer(sum))}</b></div>
+      <div class="pp-list">${spiele.length ? spiele.map(g => `<div class="pp-row"><div><span>${esc(g.t)}</span><span>${esc(dauer(g.s))}</span></div><div class="pp-bar"><i style="width:${(g.s / max * 100).toFixed(1)}%"></i></div></div>`).join("") : `<div class="pp-leer">Noch keine Spiele.</div>`}</div>
+      <div class="pp-note">Gezählt wird auf diesem Gerät, solange ein Spiel offen ist.</div>`;
+    document.body.appendChild(pop);
+    pop.querySelector("[data-ppname]").addEventListener("click", () => { profilZu(); fenster(false); });
+  }
+  document.addEventListener("mousedown", e => { if (pop && !pop.contains(e.target) && !e.target.closest("#nameBtn")) profilZu(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") profilZu(); });
+  addEventListener("resize", profilZu);
+  addEventListener("scroll", profilZu, { passive: true });
+
+  window.SB_NAME = { get: getName, aendern: () => fenster(false), zeiten };
 
   function start() {
     knopf();
