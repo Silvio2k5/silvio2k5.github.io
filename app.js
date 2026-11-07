@@ -29,8 +29,8 @@
       else if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
     } catch (_) {}
   }
-  if (player && touch) {
-    new MutationObserver(() => { if (player.hidden) { player.classList.remove('imm'); fsByUs = false; } else setImm(true); })
+  if (player) {
+    new MutationObserver(() => { if (player.hidden) { player.classList.remove('imm'); fsByUs = false; } else if (touch) setImm(true); })
       .observe(player, { attributes: true, attributeFilter: ['hidden'] });
   }
   addEventListener('message', e => {
