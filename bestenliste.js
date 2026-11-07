@@ -107,7 +107,7 @@ const BL_SPIELE = {
                          const rows = (liste || []).map((e, i) => {
                                        const p = i < 3 ? `<span class="medal m${i + 1}">${i + 1}</span>` : (i + 1) + ".";
                                        const me = kennung && e.kennung === kennung ? " me" : "";
-                                       return `<tr class="${me}"><td class="p">${p}</td><td>${esc(e.name)}</td><td class="s">${Number(e.siege) || 0}</td></tr>`;
+                                       return `<tr class="${me}"><td class="p">${p}</td><td>${esc(e.name)}</td><td class="s">${Number(e.siege) || 0} ${(Number(e.siege) || 0) === 1 ? "Sieg" : "Siege"}</td></tr>`;
                          }).join("");
                          box.innerHTML = `
                                  ${fehler ? `<div class="err">Die Bestenliste konnte gerade nicht geladen werden. Versuch es später noch einmal.</div>` :
