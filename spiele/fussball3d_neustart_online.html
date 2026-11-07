@@ -1607,6 +1607,17 @@ function tEnd(e){
 }
 for(const t of['pointerup','pointercancel','lostpointercapture'])tc.addEventListener(t,tEnd);
 tc.addEventListener('contextmenu',e=>e.preventDefault());
+/* ---------- Einladung aus der Spielbibliothek (?einladung=RAUM&rolle=host|gast) ---------- */
+(()=>{const q=new URLSearchParams(location.search),r=(q.get('einladung')||'').toUpperCase(),host=q.get('rolle')==='host';
+  if(!/^[A-Z0-9]{4}$/.test(r))return;
+  setTimeout(async()=>{
+    onOpen();await onLeave();const ph=host?'create':'joinc';ON.phase=ph;
+    onSt(host?'Raum wird erstellt …':'Verbinde mit deinem Freund …');
+    if(!await onReady()||ON.phase!==ph)return;
+    if(host){$s('onCode').textContent=r;onJoinRoom(r,true,false);setTimeout(()=>{if(ON.phase==='wait')onSt('Einladung verschickt! Warte auf deinen Freund … (Raum '+r+')');},1500);}
+    else onJoinRoom(r,false,false);
+  },400);
+})();
 let last=performance.now();
 function loop(t){
   const dt=Math.min(0.033,(t-last)/1000);last=t;
