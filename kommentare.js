@@ -45,7 +45,7 @@
   }
   async function rpc(fn, body) {
     const r = await fetch(URL_ + "/rest/v1/rpc/" + fn, { method: "POST", headers: H(), body: JSON.stringify(body) });
-    if (!r.ok) { const t = await r.text().catch(() => ""); const e = new Error(fn); e.code = (t.match(/zu_schnell|zu_viele|ungueltig/) || [""])[0]; throw e; }
+    if (!r.ok) { const t = await r.text().catch(() => ""); const e = new Error(fn); e.code = (t.match(/filter_kontakt|filter_beleidigung|zu_schnell|zu_viele|ungueltig/) || [""])[0]; throw e; }
     return r.json().catch(() => null);
   }
 
@@ -153,7 +153,7 @@
       const mine = eigeneRez();
       $("[data-knote]").textContent = S.typ === "rezension" && mine
         ? "Du hast hier schon eine Rezension geschrieben. Wenn du absendest, wird sie ersetzt."
-        : "Beiträge sind für alle sichtbar. Bitte bleib freundlich.";
+        : "Beiträge sind für alle sichtbar. Keine Beleidigungen, Links oder Kontaktdaten – solche Beiträge werden nicht veröffentlicht.";
       const err = $("[data-kerr]"); err.textContent = S.msg; err.classList.toggle("kb-ok", S.ok);
       const sb = $("[data-ksend]"); sb.disabled = S.senden; sb.textContent = S.senden ? "Sende …" : "Absenden";
     }
@@ -228,7 +228,9 @@
         S.msg = "Danke für deinen Beitrag!"; S.ok = true; S.filter = ""; S.alle = false;
         await neuLaden();
       } catch (err) {
-        S.msg = err.code === "zu_schnell" ? "Nicht so schnell – warte kurz, bevor du den nächsten Beitrag schreibst."
+        S.msg = err.code === "filter_kontakt" ? "Links, E-Mail-Adressen, Telefonnummern, IP-Adressen und @Namen sind nicht erlaubt. Bitte entferne sie (auch aus deinem Namen)."
+          : err.code === "filter_beleidigung" ? "Dein Beitrag enthält Wörter, die hier nicht erlaubt sind. Bitte formuliere ihn freundlich."
+          : err.code === "zu_schnell" ? "Nicht so schnell – warte kurz, bevor du den nächsten Beitrag schreibst."
           : err.code === "zu_viele" ? "Du hast heute schon sehr viele Beiträge geschrieben. Versuch es morgen wieder."
           : err.code === "ungueltig" ? "Der Beitrag konnte nicht gespeichert werden. Prüfe Name und Text."
           : "Senden hat nicht geklappt. Prüfe deine Internetverbindung.";
