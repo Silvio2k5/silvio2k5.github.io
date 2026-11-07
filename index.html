@@ -227,6 +227,7 @@ footer{border-top:1px solid var(--line);color:var(--dim);font-size:13px;padding:
       <label for="sort">Sortieren</label>
       <select id="sort">
         <option value="new">Neueste zuerst</option>
+<option value="pop">Beliebteste zuerst</option>
         <option value="recent">Zuletzt gespielt</option>
         <option value="az">A–Z</option>
       </select>
@@ -295,6 +296,7 @@ function visibleGames(){
     (!S.onlyFav || S.favs.includes(g.id)) &&
     (!q || (g.title+" "+g.desc+" "+g.genre).toLowerCase().includes(q)));
   if (S.sort === "az") list.sort((a,b) => a.title.localeCompare(b.title,"de"));
+  else if (S.sort === "pop") list.sort((a,b) => ((window.SB_VIEWS || {})[b.id] || 0) - ((window.SB_VIEWS || {})[a.id] || 0) || byNew(a,b));
   else if (S.sort === "recent") list.sort((a,b) => (S.recent[b.id]||0) - (S.recent[a.id]||0) || byNew(a,b));
   else list.sort(byNew);
   return list;
