@@ -1347,7 +1347,7 @@ async function lbLoad(){
     if(!r.ok)throw 0;
     const list=await r.json(),me=await lbHash();
     if(state!=='lb')return;
-    box.innerHTML=list.length?'<table class="lt">'+list.map((x,i)=>`<tr class="${me&&x.kennung===me?'me':''}"><td>${i<3?`<span class="medal m${i+1}">${i+1}</span>`:(i+1)+'.'}</td><td class="n">${escH(x.name)}</td><td><b>${Number(x.siege)||0}</b></td></tr>`).join('')+'</table>':'Noch keine Einträge – sei der Erste!';
+    box.innerHTML=list.length?'<table class="lt">'+list.map((x,i)=>`<tr class="${me&&x.kennung===me?'me':''}"><td>${i<3?`<span class="medal m${i+1}">${i+1}</span>`:(i+1)+'.'}</td><td class="n">${escH(x.name)}</td><td><b>${Number(x.siege)||0}</b> ${(Number(x.siege)||0)===1?'Sieg':'Siege'}</td></tr>`).join('')+'</table>':'Noch keine Einträge – sei der Erste!';
   }catch(e){if(state==='lb')box.textContent='Die Bestenliste konnte gerade nicht geladen werden. Prüfe deine Internetverbindung.';}
   const er=$s('lbErr');if(er)er.textContent=err;
 }
