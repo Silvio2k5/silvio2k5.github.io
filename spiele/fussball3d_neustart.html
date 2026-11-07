@@ -87,14 +87,40 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:Georgia,"Times Ne
 .np .nn{font-size:46px;line-height:1;min-width:28px}
 .np .mb{min-width:0;padding:2px 9px;font-size:20px}
 p{margin:10px 0 0;font-size:15px;text-align:center;line-height:1.5}
+/* ---------- Handy / Touch ---------- */
+#wrap{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#wrap button,#wrap input{touch-action:manipulation}
+#pb{z-index:6}
+.mb.bt{min-width:0;font-size:16px;padding:8px 18px}
+#tc{position:absolute;inset:0;z-index:3;display:none;touch-action:none}
+#joy{position:absolute;left:16%;top:70%;width:130px;height:130px;margin:-65px 0 0 -65px;border-radius:50%;background:rgba(255,255,255,.10);border:2px solid rgba(255,255,255,.35);pointer-events:none;opacity:.55}
+#joy.on{opacity:1}
+#knob{position:absolute;left:50%;top:50%;width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.55);transform:translate(-50%,-50%)}
+#shoot{position:absolute;right:7%;bottom:12%;width:96px;height:96px;border-radius:50%;background:rgba(255,211,77,.35);border:2px solid rgba(255,211,77,.8);color:#fff;font:bold 15px Georgia,serif;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:.7}
+#shoot.on{background:rgba(255,211,77,.7);opacity:1;transform:scale(.94)}
+#tc .th{position:absolute;bottom:6px;width:50%;text-align:center;font:12px Georgia,serif;color:rgba(255,255,255,.6);pointer-events:none}
+#rot{display:none;position:fixed;inset:0;z-index:100;background:#111a12;color:#fff;flex-direction:column;align-items:center;justify-content:center;gap:14px;font:bold 20px Georgia,serif;text-align:center;padding:20px}
+#rot .ic{font-size:64px;animation:rt 2s ease-in-out infinite}
+@keyframes rt{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(90deg)}}
+@media (pointer:coarse) and (orientation:portrait){#rot{display:flex}}
+@media (pointer:coarse) and (orientation:landscape){
+  html,body{overscroll-behavior:none;overflow:hidden;background:#111a12}
+  body{padding:0}
+  body>p{display:none}
+  #wrap{position:fixed;top:0;bottom:0;left:env(safe-area-inset-left,0px);right:env(safe-area-inset-right,0px);width:auto;height:auto;max-width:none;aspect-ratio:auto;border-radius:0}
+}
 </style></head>
 <body>
-<div id="wrap"><div id="hud"></div><div id="msg"></div><button id="pb" tabindex="-1">Pause (P)</button><div id="wb"><div id="wh">Spieler drehen: rechts mit der Maus ziehen oder ← →</div><div class="wr"><button class="mb" id="wbs" data-spin="1" tabindex="-1">Drehen: an (R)</button><button class="mb" data-back="1" tabindex="-1">Zurück zum Menü (M)</button></div></div><button id="fs" tabindex="-1" title="Vollbild (V)"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#fff" stroke-width="2" style="pointer-events:none"><path d="M2 7V2h5M11 2h5v5M16 11v5h-5M7 16H2v-5"/></svg></button><button id="snd" tabindex="-1" title="Ton an/aus (N)">🔊</button><input id="vol" type="range" min="0" max="100" value="100" tabindex="-1" title="Lautstärke"></div>
-<p>Bewegen: Pfeiltasten oder WASD · Leertaste: Ball schießen oder Gegner wegkicken · Enter: Start/Weiter · P: Pause</p>
+<div id="wrap"><div id="hud"></div><div id="msg"></div><button id="pb" tabindex="-1">Pause (P)</button><div id="wb"><div id="wh">Spieler drehen: rechts mit der Maus ziehen oder ← →</div><div class="wr"><button class="mb" id="wbs" data-spin="1" tabindex="-1">Drehen: an (R)</button><button class="mb" data-back="1" tabindex="-1">Zurück zum Menü (M)</button></div></div><button id="fs" tabindex="-1" title="Vollbild (V)"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#fff" stroke-width="2" style="pointer-events:none"><path d="M2 7V2h5M11 2h5v5M16 11v5h-5M7 16H2v-5"/></svg></button><button id="snd" tabindex="-1" title="Ton an/aus (N)">🔊</button><input id="vol" type="range" min="0" max="100" value="100" tabindex="-1" title="Lautstärke"><div id="tc"><div id="joy"><div id="knob"></div></div><div id="shoot">SCHUSS</div><div class="th" style="left:0">links ziehen: laufen</div><div class="th" style="right:0">rechts tippen: schießen / kicken</div></div></div>
+<div id="rot"><div class="ic">📱</div>Bitte das Handy quer halten</div>
+<p>Bewegen: Pfeiltasten oder WASD · Leertaste: Ball schießen oder Gegner wegkicken · Enter: Start/Weiter · P: Pause<br>Handy: quer halten · links ziehen zum Laufen · rechts tippen zum Schießen</p>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const W=800,H=500,GH=150,gy0=(H-GH)/2,gy1=gy0+GH,S=0.1;
 const keys={};
+let touchUI=matchMedia('(pointer:coarse)').matches;
+addEventListener('touchstart',()=>{touchUI=true;},{passive:true,capture:true});
+addEventListener('keydown',()=>{touchUI=false;},{capture:true});
 const OPP=[
   {n:'Anfänger',col:0x8fbf5f,sp:130,sh:400,kick:3.5,cdv:1.0,err:45},
   {n:'Amateur',col:0xe0a030,sp:160,sh:460,kick:2.8,cdv:0.85,err:28},
@@ -118,8 +144,9 @@ const sun=new THREE.DirectionalLight(0xffffff,0.55);sun.position.set(-20,40,20);
 function resize(){
   const w=wrap.clientWidth,h=wrap.clientHeight;
   renderer.setSize(w,h,false);
-  const k=Math.max(1,Math.min(w/900,h/562,2.6));
+  const k=Math.max(0.5,Math.min(w/900,h/562,2.6));
   for(const id of['hud','msg','pb','fs','snd','vol','wb']){const el=document.getElementById(id);if(el)el.style.zoom=k;}
+  if(touchUI&&innerHeight>innerWidth&&state==='play')paused=true;
   camera.aspect=w/h;
   camera.updateProjectionMatrix();fit();
 }
@@ -132,7 +159,7 @@ function fit(){
     if(pts.every(p=>{const q=p.clone().project(camera);return Math.abs(q.x)<0.97&&q.y<0.8&&q.y>-0.94;})&&TP.every(p=>{const q=p.clone().project(camera);return Math.abs(q.x)<0.97&&q.y<0.97;}))break;
   }
 }
-addEventListener('resize',resize);resize();
+addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,300));resize();
 
 function box(w,h,d,col,x,y,z,mat){
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat||new THREE.MeshLambertMaterial({color:col}));
@@ -565,6 +592,10 @@ addEventListener('keyup',e=>keys[e.code]=false);
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;if(state==='play')paused=true;});
 document.getElementById('pb').onclick=function(){if(state==='play')paused=!paused;this.blur();};
 msg.addEventListener('click',e=>{
+  if(state==='play'&&paused&&e.target.closest('button[data-res]')){paused=false;return;}
+  if(state==='play'&&paused&&e.target.closest('button[data-abort]')){paused=false;state='menu';return;}
+  if(state==='end'&&e.target.closest('button[data-adv]')){advance();return;}
+  if(state==='end'&&e.target.closest('button[data-tomenu]')){state='menu';return;}
   if(state==='end'&&e.target.closest('button[data-lgmenu]')){lgConfirm=false;state='menu';return;}
   if(state==='end'&&e.target.closest('button[data-lgnext]')){advance();return;}
   if(state==='end'&&e.target.closest('button[data-lgx]')){lgConfirm=true;return;}
@@ -763,8 +794,9 @@ function update(dt){
   if(state!=='play'||paused)return;
   if(pause>0){pause-=dt;if(pause<=0){if(golden)finish();else reset();}return;}
   if(!golden){time-=dt;if(time<=0){time=0;if(score[0]===score[1]&&!lg)golden=true;else{finish();return;}}}
-  const dx=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);
-  const dy=(keys.ArrowDown||keys.KeyS?1:0)-(keys.ArrowUp||keys.KeyW?1:0);
+  let dx=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);
+  let dy=(keys.ArrowDown||keys.KeyS?1:0)-(keys.ArrowUp||keys.KeyW?1:0);
+  if(!dx&&!dy&&J.id!==null&&Math.hypot(J.dx,J.dy)>0.18){dx=J.dx;dy=J.dy;}
   move(me,dx,dy,230,dt);ai(dt);played+=dt;if(streakAt>=0&&played>=streakAt){streakAt=-1;if(!fl.on)spawnFl();}flUpdate(dt);
   sep();
   for(let i=0;i<4;i++){ball.x+=ball.vx*dt/4;ball.y+=ball.vy*dt/4;touch(me);touch(cpu);}
@@ -802,6 +834,7 @@ function menuHtml(){
     +((SHOW_TROPHIES||stats.tour>0||stats.lgw>0)?`<div class="tro">${[[Math.max(SHOW_TROPHIES?1:0,stats.tour),'#ffc933','Turnier'],[Math.max(SHOW_TROPHIES?1:0,stats.lgw),'#dfe6ee','Liga']].filter(x=>x[0]>0).map(([n,c,t])=>`<div><svg width="34" height="34" viewBox="0 0 24 24" style="pointer-events:none"><path d="M6 3h12v5a6 6 0 0 1-12 0z" fill="${c}"/><path d="M6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3" fill="none" stroke="${c}" stroke-width="1.6"/><path d="M11 14h2v4h-2zM8 18.5h8V21H8z" fill="${c}"/></svg><b>×${n}</b><span style="opacity:.75">${t}</span></div>`).join('')}</div>`:'')
     +`<div class="top">Siege ${stats.wins} · Tore ${stats.goals}</div><button class="mb corner" data-w="1">Umkleide (U)</button>`;
 }
+const endBtns=t=>`<div class="lo"><button class="mb bt" data-adv="1">${t} (Enter)</button><button class="mb bt" data-tomenu="1">Menü (M)</button></div>`;
 function setMsg(html,cls){
   const k=html+cls;if(msg.dataset.k===k)return;msg.dataset.k=k;
   msg.className=cls;msg.innerHTML=html;msg.style.display=html?'flex':'none';
@@ -817,6 +850,7 @@ function sync(dt){
   }else if(wardOn){fit();pm.rotation.y=0;}
   const wardOn0=wardOn&&!wd;wardOn=wd;cm.visible=!wd&&!cer.on;bm.visible=!cer.on;sh.visible=!wd&&!cer.on;
   {const wbEl=document.getElementById('wb'),sl='Drehen: '+(spin?'an':'aus')+' (R)',sb=document.getElementById('wbs');wbEl.style.display=wd?'flex':'none';wrap.classList.toggle('wardmode',wd);if(sb.textContent!==sl)sb.textContent=sl;}
+  {const on=touchUI&&state==='play'&&!paused&&!cer.on;tc.style.display=on?'block':'none';if(!on&&(J.id!==null||shootIds.size))touchReset();}
   hud.style.visibility=state==='menu'||state==='ward'?'hidden':'visible';document.getElementById('pb').style.visibility=state==='menu'||state==='ward'||(state==='end'&&lg)?'hidden':'visible';
   if(wd){bm.position.set(7.0,2.6+Math.sin(performance.now()/500)*0.2,0.5);bm.rotation.y+=dt*0.9;bm.rotation.x=0.3;bm.rotation.z=0;}
   else{if(wardOn0){bm.rotation.set(0,0,0);}bm.position.set((ball.x-W/2)*S,0.9,(ball.y-H/2)*S);
@@ -829,14 +863,14 @@ function sync(dt){
   else if(state==='end'){
     const sc=`${score[0]} : ${score[1]}`,ul=unlockMsg?'<br>🔓 '+unlockMsg:'';
     if(endKind==='lpre'||endKind==='league')setMsg(leagueHtml(),'lgs');
-    else if(endKind==='won')setMsg(`<h1>Weiter!</h1>${sc} gegen ${opp.n}<br>Nächster Gegner: ${OPP[round+1].n}${ul}<br>Enter drücken`,'');
-    else if(endKind==='champ')setMsg(`<h1>Turniersieger!</h1>${sc} im Finale gegen ${opp.n}${ul}<br>Enter: Turnier neu starten · M: Menü`,'');
-    else if(endKind==='lost')setMsg(`<h1>Ausgeschieden</h1>${sc} gegen ${opp.n} (Runde ${round+1} von 4)${ul}<br>Enter: Turnier neu starten · M: Menü`,'');
+    else if(endKind==='won')setMsg(`<h1>Weiter!</h1>${sc} gegen ${opp.n}<br>Nächster Gegner: ${OPP[round+1].n}${ul}${endBtns('Nächstes Spiel')}`,'');
+    else if(endKind==='champ')setMsg(`<h1>Turniersieger!</h1>${sc} im Finale gegen ${opp.n}${ul}${endBtns('Turnier neu starten')}`,'');
+    else if(endKind==='lost')setMsg(`<h1>Ausgeschieden</h1>${sc} gegen ${opp.n} (Runde ${round+1} von 4)${ul}${endBtns('Turnier neu starten')}`,'');
     else{
       const r=score[0]>score[1]?'Du gewinnst!':score[0]<score[1]?'Der Computer gewinnt':'Unentschieden';
-      setMsg(`<h1>${r}</h1>${sc}${ul}<br>Enter: noch ein Spiel · M: Menü`,'');
+      setMsg(`<h1>${r}</h1>${sc}${ul}${endBtns('Noch ein Spiel')}`,'');
     }
-  }else if(paused)setMsg('<h1>Pause</h1>P, Esc oder Button: weiter<br>Enter: Spiel abbrechen','');
+  }else if(paused)setMsg('<h1>Pause</h1><div class="lo"><button class="mb bt" data-res="1">Weiter (P)</button><button class="mb bt" data-abort="1">Spiel abbrechen (Enter)</button></div>','');
   else if(pause>0)setMsg('TOR!','goal');
   else setMsg('','');
 }
@@ -1144,6 +1178,34 @@ function auIcon(){document.getElementById('snd').textContent=AU.on&&AU.vol>0?'�
 }
 document.getElementById('snd').onclick=function(){auToggle();this.blur();};
 addEventListener('keydown',e=>{if(e.code==='KeyN')auToggle();});
+/* ---------- Touch-Steuerung: links Joystick, rechts Schuss ---------- */
+const tc=document.getElementById('tc'),joy=document.getElementById('joy'),knob=document.getElementById('knob'),shootEl=document.getElementById('shoot');
+const J={id:null,x0:0,y0:0,dx:0,dy:0},shootIds=new Set(),JR=55;
+function joyHome(){joy.style.left=joy.style.top='';knob.style.transform='translate(-50%,-50%)';joy.classList.remove('on');}
+function touchReset(){J.id=null;J.dx=J.dy=0;joyHome();shootIds.clear();keys.Space=false;shootEl.classList.remove('on');}
+tc.addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  const r=tc.getBoundingClientRect();
+  if(e.clientX<r.left+r.width*0.5){
+    if(J.id!==null)return;
+    J.id=e.pointerId;J.x0=e.clientX;J.y0=e.clientY;J.dx=J.dy=0;
+    joy.style.left=(e.clientX-r.left)+'px';joy.style.top=(e.clientY-r.top)+'px';joy.classList.add('on');
+  }else{shootIds.add(e.pointerId);keys.Space=true;shootEl.classList.add('on');}
+  try{tc.setPointerCapture(e.pointerId);}catch(_){}
+});
+tc.addEventListener('pointermove',e=>{
+  if(e.pointerId!==J.id)return;
+  let dx=e.clientX-J.x0,dy=e.clientY-J.y0;const l=Math.hypot(dx,dy);
+  if(l>JR){dx*=JR/l;dy*=JR/l;}
+  J.dx=dx/JR;J.dy=dy/JR;
+  knob.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+});
+function tEnd(e){
+  if(e.pointerId===J.id){J.id=null;J.dx=J.dy=0;joyHome();}
+  if(shootIds.delete(e.pointerId)&&!shootIds.size){keys.Space=false;shootEl.classList.remove('on');}
+}
+for(const t of['pointerup','pointercancel','lostpointercapture'])tc.addEventListener(t,tEnd);
+tc.addEventListener('contextmenu',e=>e.preventDefault());
 let last=performance.now();
 function loop(t){
   const dt=Math.min(0.033,(t-last)/1000);last=t;
