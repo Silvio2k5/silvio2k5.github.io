@@ -41,6 +41,27 @@
     if (!document.fullscreenElement && fsByUs) { fsByUs = false; if (player) player.classList.remove('imm'); }
   });
 
+  // Abzeichen für Spiele mit Online-Multiplayer und Crossplay (PC & Handy)
+  const ONLINE_SPIELE = ['fussball-3d'];
+  const badgeCss = document.createElement('style');
+  badgeCss.textContent = '.xbadge{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#7fe0a0;border:1px solid rgba(127,224,160,.45);border-radius:99px;padding:2px 9px;white-space:nowrap}';
+  head.appendChild(badgeCss);
+  const xBadge = () => { const s = document.createElement('span'); s.className = 'xbadge'; s.textContent = '🌐 Online · Crossplay PC & Handy'; s.title = 'Online 1 gegen 1 – PC und Handy können gegeneinander spielen'; return s; };
+  function badges() {
+    for (const id of ONLINE_SPIELE) {
+      document.querySelectorAll('.card[data-open="' + id + '"] .cbody').forEach(b => {
+        if (b.querySelector('.xbadge')) return;
+        const t = b.querySelector('.tag'); if (t) t.after(xBadge()); else b.prepend(xBadge());
+      });
+      const hero = document.querySelector('.hero');
+      if (hero && hero.querySelector('[data-open="' + id + '"]')) { const m = hero.querySelector('.metarow'); if (m && !m.querySelector('.xbadge')) m.appendChild(xBadge()); }
+      const det = document.querySelector('#modalRoot .detail');
+      if (det && decodeURIComponent((location.hash || '').slice(1)) === id) { const d = det.querySelector('.dtitle > div'); if (d && !d.querySelector('.xbadge')) d.appendChild(xBadge()); }
+    }
+  }
+  new MutationObserver(badges).observe(document.body, { childList: true, subtree: true });
+  badges();
+
   const standalone = () => matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
   if (standalone()) return;
 
