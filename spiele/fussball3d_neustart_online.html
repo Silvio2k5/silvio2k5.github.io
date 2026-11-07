@@ -884,9 +884,8 @@ function menuHtml(){
   return '<h1>Mini-Fußball 3D</h1>'
     +b(0,'Turnier','ffd34d')
     +b(1,league&&league.round<14?`Liga fortsetzen (Spieltag ${league.round+1}/14)`:'Liga','4fc3f7')
-    +b(2,'🌐 Online 1 gegen 1','2ecc71')
     +'<div class="mh">Freundschaftsspiel (90 Sekunden), Schwierigkeit:</div>'
-    +OPP.map((o,i)=>b(i+3,o.n,o.col.toString(16).padStart(6,'0'))).join('')    +'<div class="mh">↑ ↓ wählen · Enter starten · oder anklicken</div>'
+    +b(2,'🌐 Online 1 gegen 1','2ecc71')+OPP.map((o,i)=>b(i+3,o.n,o.col.toString(16).padStart(6,'0'))).join('')    +'<div class="mh">↑ ↓ wählen · Enter starten · oder anklicken</div>'
     +`<div class="np"><div>Deine Nummer</div><div class="row"><button class="mb" data-n="-1">−</button><div class="nn">${myNum}</div><button class="mb" data-n="1">+</button></div><div class="mh" style="margin:0">← → ändern</div><div class="mh" style="margin:30px 0 0">Heimfarbe</div><div class="pal">${PAL.map(c=>`<button class="sw${c===homeCol?' sel':''}" data-c="${c}" style="background:#${c.toString(16).padStart(6,'0')}"></button>`).join('')}</div></div>`
     +tasksHtml()
     +`<button class="mb sbtn" data-st="1" title="Statistik (I)"><svg width="20" height="20" viewBox="0 0 20 20" fill="#fff" style="pointer-events:none"><rect x="2" y="11" width="4" height="7" rx="1"/><rect x="8" y="5" width="4" height="13" rx="1"/><rect x="14" y="8" width="4" height="10" rx="1"/></svg></button>`
