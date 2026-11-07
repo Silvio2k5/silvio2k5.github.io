@@ -681,6 +681,7 @@ msg.addEventListener('click',e=>{
     return;
   }
   if(state==='lb'){
+    const kb=e.target.closest('button[data-lbk]');if(kb){lbKat=kb.dataset.lbk;lbRender();return;}
     if(e.target.closest('button[data-lbback]'))state='menu';
     else if(e.target.closest('button[data-lbsave]'))lbSave();
     return;
@@ -1561,7 +1562,7 @@ async function lbMelden(name){
 }
 async function lbHash(){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(lbId()));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}catch(e){return '';}}
 function lbHtml(){
-  return `<h1>🏆 Bestenliste</h1><div style="font-size:14px;opacity:.85">Mini-Fußball 3D · Siege – weltweit</div>
+  return `<h1>🏆 Bestenliste</h1><div style="font-size:14px;opacity:.85">Mini-Fußball 3D · weltweit</div>
   <div class="lbbox" id="lbBox">Lade Bestenliste …</div>
   <div class="lbr"><input id="lbName" maxlength="16" placeholder="Dein Name für die Bestenliste" autocomplete="off" spellcheck="false"><button class="mb" data-lbsave="1" id="lbSave">Mitmachen</button></div>
   <div class="sy"><div class="st bad" id="lbErr" style="margin:0"></div></div>
@@ -1569,6 +1570,27 @@ function lbHtml(){
   <div class="lo"><button class="mb" data-lbback="1">Zurück zum Menü (M)</button></div>`;
 }
 function lbOpen(){state='lb';setMsg(lbHtml(),'sync lb');lbLoad();}
+/* Ranglisten je Statistik: jede Statistik wird für sich sortiert */
+const lbSieg=t=>{const m=/^\s*(\d+)\s*:\s*(\d+)/.exec(t||'');return m?[+m[1]-+m[2],+m[1]]:[-1,-1];};
+const LBK=[
+  {id:'siege',t:'Siege',w:e=>Number(e.siege)||0,x:v=>v+(v===1?' Sieg':' Siege')},
+  {id:'tore',t:'Tore',w:e=>Number(e.tore)||0,x:v=>v+(v===1?' Tor':' Tore')},
+  {id:'pokale',t:'Pokale',w:e=>Number(e.pokale)||0,x:v=>v+(v===1?' Pokal':' Pokale')},
+  {id:'sieg',t:'Höchster Sieg',w:e=>lbSieg(e.hoechster_sieg),x:(v,e)=>e.hoechster_sieg?escH(e.hoechster_sieg):'–'},
+  {id:'serie',t:'Siegesserie',w:e=>Number(e.serie)||0,x:v=>v+(v===1?' Sieg':' Siege')+' in Folge'}
+];
+let lbKat='siege',lbAlle=[],lbMe='';
+function lbRender(){
+  const box=$s('lbBox');if(!box)return;
+  const extra=lbAlle.some(e=>e&&'tore' in e);if(!extra)lbKat='siege';
+  const k=LBK.find(q=>q.id===lbKat)||LBK[0];
+  const vgl=(a,b)=>{const x=k.w(a),y=k.w(b);return Array.isArray(x)?(y[0]-x[0]||y[1]-x[1]):y-x;};
+  const top=lbAlle.filter(e=>{const v=k.w(e);return k.id==='siege'||(Array.isArray(v)?v[0]>=0:v>0);})
+    .map((e,i)=>[e,i]).sort((a,b)=>vgl(a[0],b[0])||(Number(b[0].siege)||0)-(Number(a[0].siege)||0)||a[1]-b[1]).slice(0,10).map(q=>q[0]);
+  const tabs=extra?'<div class="lo" style="margin:0 0 6px;gap:6px">'+LBK.map(q=>`<button class="mb sm${q.id===lbKat?' sel':''}" data-lbk="${q.id}">${q.t}</button>`).join('')+'</div>':'';
+  box.innerHTML=tabs+(top.length?'<table class="lt">'+top.map((x,i)=>`<tr class="${lbMe&&x.kennung===lbMe?'me':''}"><td>${i<3?`<span class="medal m${i+1}">${i+1}</span>`:(i+1)+'.'}</td><td class="n">${escH(x.name)}</td><td>${k.x(k.w(x),x)}</td></tr>`).join('')+'</table>':(lbAlle.length?'Hier hat noch niemand einen Eintrag.':'Noch keine Einträge – sei der Erste!'))
+    +(extra&&lbKat==='pokale'?'<div style="font-size:12px;opacity:.75">Pokale = gewonnene Turniere, Ligen und Weltmeisterschaften</div>':'');
+}
 async function lbLoad(){
   const box=$s('lbBox');if(!box)return;
   const name=(lsG('bl-name')||'').trim();
@@ -1577,11 +1599,13 @@ async function lbLoad(){
   let err='';
   if(name.length>=2){try{await lbMelden(name);}catch(e){if(e.vergeben)err='Dein Name ist inzwischen vergeben – bitte wähle einen anderen.';}}
   try{
-    const r=await fetch(SY_URL+'/rest/v1/rangliste?select=name,siege,kennung&spiel=eq.'+LB_SPIEL+'&order=siege.desc,aktualisiert.asc&limit=10',{headers:{apikey:SY_KEY}});
+    const basis=SY_URL+'/rest/v1/rangliste?spiel=eq.'+LB_SPIEL+'&order=siege.desc,aktualisiert.asc&limit=1000&select=';
+    let r=await fetch(basis+'name,siege,kennung,tore,pokale,hoechster_sieg,serie',{headers:{apikey:SY_KEY}});
+    if(!r.ok)r=await fetch(basis+'name,siege,kennung',{headers:{apikey:SY_KEY}});
     if(!r.ok)throw 0;
-    const list=await r.json(),me=await lbHash();
+    lbAlle=await r.json();lbMe=await lbHash();
     if(state!=='lb')return;
-    box.innerHTML=list.length?'<table class="lt">'+list.map((x,i)=>`<tr class="${me&&x.kennung===me?'me':''}"><td>${i<3?`<span class="medal m${i+1}">${i+1}</span>`:(i+1)+'.'}</td><td class="n">${escH(x.name)}</td><td><b>${Number(x.siege)||0}</b> ${(Number(x.siege)||0)===1?'Sieg':'Siege'}</td></tr>`).join('')+'</table>':'Noch keine Einträge – sei der Erste!';
+    lbRender();
   }catch(e){if(state==='lb')box.textContent='Die Bestenliste konnte gerade nicht geladen werden. Prüfe deine Internetverbindung.';}
   const er=$s('lbErr');if(er)er.textContent=err;
 }
