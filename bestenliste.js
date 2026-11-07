@@ -117,7 +117,7 @@ const BL_SPIELE = {
                                                                          <button class="btn sm" id="blSave" type="button">${name ? "Namen ändern" : "Mitmachen"}</button>
                                                                                  </div>
                                                                                          <div class="err" id="blErr">${hinweis ? esc(hinweis) : ""}</div>
-                                                                                                 <div class="info">Deine ${esc(cfg.titel)} auf diesem Gerät: <b>${eigeneSiege(cfg)}</b>. Sie werden automatisch übertragen, wenn du das Spiel schließt.</div>`;
+                                                                                                 <div class="info">Deine ${esc(cfg.titel)} (alle Geräte zusammen): <b>${eigeneSiege(cfg)}</b>. Sie werden automatisch übertragen, wenn du das Spiel schließt.</div>`;
                          const inp = box.querySelector("#blName"), btn = box.querySelector("#blSave");
                          const save = async () => {
                                        const v = inp.value.replace(/\s+/g, " ").trim();
