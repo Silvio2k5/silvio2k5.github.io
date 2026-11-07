@@ -65,6 +65,7 @@
   // Aufrufe pro Spiel: wird beim Spielstart gezählt (pro Gerät höchstens alle 30 Minuten) und mit Augensymbol angezeigt
   const SB_URL = 'https://hibfzyxbmbspfhpughim.supabase.co', SB_KEY = 'sb_publishable_w4PzkJlkAo5WN2PrFftWvg_iN2b_Rz0';
   const views = {};
+  window.SB_VIEWS = views;
   const viewCss = document.createElement('style');
   viewCss.textContent = '.vcount{display:inline-flex;align-items:center;gap:5px;color:var(--dim);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}.vcount svg{flex:none;opacity:.85}.cbody .vcount{margin-top:auto;padding-top:4px}';
   head.appendChild(viewCss);
@@ -91,6 +92,7 @@
       if (!r.ok) return;
       for (const x of await r.json()) views[x.spiel] = Number(x.anzahl) || 0;
       showViews();
+      const so = document.getElementById('sort'); if (so && so.value === 'pop') so.dispatchEvent(new Event('change'));
     } catch (_) {}
   }
   async function countView(id) {
