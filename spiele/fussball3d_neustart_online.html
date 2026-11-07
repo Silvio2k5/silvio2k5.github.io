@@ -520,7 +520,7 @@ base=Object.assign({wins:0,goals:0,tour:0,wk:0,big:0,losses:0,conc:0,games:0,cs:
 TASKS.splice(0,5,...SETS[taskRound%SETS.length]);
 const tv=T=>Math.max(0,(T.v(stats)||0)-(T.v(base)||0));
 const ALL_FREE=false;
-const SPECREQ={1:{v:s=>s.gg,max:20,t:'20 Golden Goals'},2:{v:s=>s.goals,max:1000,t:'1000 Tore'},3:{v:s=>s.tour,max:5,t:'5 Turniersiege'},4:{v:s=>s.wins,max:500,t:'500 Siege'},5:{v:s=>s.cs,max:50,t:'50 Siege zu Null'}};
+const SPECREQ={1:{v:s=>s.gg,max:20,t:'20 Golden Goals'},2:{v:s=>s.goals,max:1000,t:'1000 Tore'},3:{v:s=>(s.tour||0)+(s.lgw||0),max:5,t:'5 Pokale'},4:{v:s=>s.wins,max:500,t:'500 Siege'},5:{v:s=>s.cs,max:50,t:'50 Siege zu Null'}};
 function unlocked(k,i){if(k==='special'||k==='back')return i===0||SPECREQ[i].v(stats)>=SPECREQ[i].max;return ALL_FREE||!(LOCK[k]&&LOCK[k].includes(i))||unl.includes(k+':'+i);}
 function doneCount(){return TASKS.filter(k=>tv(k)>=k.max).length;}
 function lockMsg(k,i){if(k==='special'||k==='back'){const r=SPECREQ[i];return `Gesperrt: ${r.t} (${Math.min(r.max,r.v(stats)||0)} / ${r.max})`;}return 'Zum Freischalten Aufgaben erledigen';}
@@ -705,7 +705,7 @@ function leagueHtml(){
   const tb='<table class="lt"><tr><th>Pl.</th><th class="n">Mannschaft</th><th>Sp.</th><th>S</th><th>U</th><th>N</th><th>Tore</th><th>Diff</th><th>Pkt</th></tr>'
     +rows.map((x,k)=>{const d=x.gf-x.ga;return `<tr class="${x.i===0?'me':''}"><td>${k+1}</td><td class="n"><span class="dot" style="background:${hex(cl(x.i))}"></span>${nm(x.i)}</td><td>${x.w+x.d+x.l}</td><td>${x.w}</td><td>${x.d}</td><td>${x.l}</td><td>${x.gf}:${x.ga}</td><td>${d>0?'+':''}${d}</td><td><b>${x.p}</b></td></tr>`;}).join('')+'</table>';
   const pos=rows.findIndex(x=>x.i===0)+1;
-  if(endKind==='lpre')return tasksHtml()+`<h1 class="lh">Liga · Spieltag ${r+1} von 14</h1>${tb}Nächstes Spiel: Du gegen ${LGT[lgNext()-1].n}<br>${lgConfirm?'<b style="margin-top:8px">Liga wirklich neu starten? Der Fortschritt geht verloren.</b><div class="lo"><button class="mb sm" data-lgy="1">Ja, neu starten</button><button class="mb sm" data-lgn="1">Abbrechen</button></div>':'<div class="lo"><button class="mb sm" data-lgx="1">Liga neu starten</button><button class="mb sm" data-lgnext="1">Nächstes Spiel (Enter)</button></div><button class="mb sm cr" data-lgmenu="1">Zurück zum Menü (M)</button>'}`;
+  if(endKind==='lpre')return tasksHtml()+`<h1 class="lh">Liga · Spieltag ${r+1} von 14</h1>${tb}Nächstes Spiel: Du gegen ${LGT[lgNext()-1].n}<br>${lgConfirm?'<b style="margin-top:8px">Liga wirklich neu starten? Der Fortschritt geht verloren.</b><div class="lo"><button class="mb sm" data-lgn="1">Abbrechen</button><button class="mb sm" data-lgy="1">Ja, neu starten</button></div>':'<div class="lo"><button class="mb sm" data-lgx="1">Liga neu starten</button><button class="mb sm" data-lgnext="1">Nächstes Spiel (Enter)</button></div><button class="mb sm cr" data-lgmenu="1">Zurück zum Menü (M)</button>'}`;
   const res=score[0]>score[1]?'Sieg':score[0]<score[1]?'Niederlage':'Unentschieden',ul=unlockMsg?'<br>🔓 '+unlockMsg:'';
   return tasksHtml()+`<h1 class="lh">${res} ${score[0]} : ${score[1]}</h1>gegen ${opp.n} · Spieltag ${r} von 14${ul}${tb}`+(r>=14?`<b style="margin-top:8px">${pos===1?'Meister! Du hast den Ligapokal gewonnen.':'Saison beendet: Du wirst '+pos+'.'}</b><div class="lo"><button class="mb sm" data-lgnext="1">Zurück zum Menü (Enter)</button></div>`:'<div class="lo"><button class="mb sm" data-lgmenu="1">Zurück zum Menü (M)</button><button class="mb sm" data-lgnext="1">Nächstes Spiel (Enter)</button></div>');
 }
@@ -886,7 +886,7 @@ function menuHtml(){
     +b(1,league&&league.round<14?`Liga fortsetzen (Spieltag ${league.round+1}/14)`:'Liga','4fc3f7')
     +'<div class="mh">Freundschaftsspiel (90 Sekunden), Schwierigkeit:</div>'
     +b(2,'🌐 Online 1 gegen 1','2ecc71')+OPP.map((o,i)=>b(i+3,o.n,o.col.toString(16).padStart(6,'0'))).join('')    +'<div class="mh">↑ ↓ wählen · Enter starten · oder anklicken</div>'
-    +`<div class="np"><div>Deine Nummer</div><div class="row"><button class="mb" data-n="-1">−</button><div class="nn">${myNum}</div><button class="mb" data-n="1">+</button></div><div class="mh" style="margin:0">← → ändern</div><div class="mh" style="margin:30px 0 0">Heimfarbe</div><div class="pal">${PAL.map(c=>`<button class="sw${c===homeCol?' sel':''}" data-c="${c}" style="background:#${c.toString(16).padStart(6,'0')}"></button>`).join('')}</div></div>`
+    +`<div class="np"><div>Deine Trikotnummer</div><div class="row"><button class="mb" data-n="-1">−</button><div class="nn">${myNum}</div><button class="mb" data-n="1">+</button></div><div class="mh" style="margin:0">← → ändern</div><div class="mh" style="margin:30px 0 0">Heimfarbe</div><div class="pal">${PAL.map(c=>`<button class="sw${c===homeCol?' sel':''}" data-c="${c}" style="background:#${c.toString(16).padStart(6,'0')}"></button>`).join('')}</div></div>`
     +tasksHtml()
     +`<button class="mb sbtn" data-st="1" title="Statistik (I)"><svg width="20" height="20" viewBox="0 0 20 20" fill="#fff" style="pointer-events:none"><rect x="2" y="11" width="4" height="7" rx="1"/><rect x="8" y="5" width="4" height="13" rx="1"/><rect x="14" y="8" width="4" height="10" rx="1"/></svg></button>`
     +(menuStats?(()=>{const d=stats.goals-stats.conc,rw=(a,b)=>`<div class="r"><span>${a}</span><b>${b}</b></div>`;return `<div class="spn"><h2>Statistik</h2>${rw('Spiele',stats.games)}${rw('Siege',stats.wins)}${rw('Niederlagen',stats.losses)}${rw('Torverhältnis',stats.goals+' : '+stats.conc+' ('+(d>0?'+':'')+d+')')}${rw('Höchster Sieg',stats.bws||'–')}${rw('Höchste Niederlage',stats.bls||'–')}${rw('Längste Siegesserie',stats.bstr)}</div>`;})():'')
@@ -933,7 +933,7 @@ function sync(dt){
       const hint=ON.gone?'<div class="mh">'+escH(ON.oppName)+' hat das Spiel verlassen.</div>':(ON.want[1]&&!ON.want[0]?'<div class="mh">'+escH(ON.oppName)+' möchte eine Revanche!</div>':'');
       setMsg(`<h1>${escH(r)}</h1>${sc} gegen ${escH(ON.oppName)}${ON.abort?'':ul}<div class="lo">${re}<button class="mb bt" data-tomenu="1">Menü (M)</button></div>${hint}`,'');
     }
-    else if(endKind==='won')setMsg(`<h1>Weiter!</h1>${sc} gegen ${opp.n}<br>Nächster Gegner: ${OPP[round+1].n}${ul}${endBtns('Nächstes Spiel')}`,'');
+    else if(endKind==='won')setMsg(`<h1>Weiter!</h1>${sc} gegen ${opp.n}<br>Nächster Gegner: ${OPP[round+1].n}${ul}<div class="lo"><button class="mb bt" data-tomenu="1">Menü (M)</button><button class="mb bt" data-adv="1">Nächstes Spiel (Enter)</button></div>`,'');
     else if(endKind==='champ')setMsg(`<h1>Turniersieger!</h1>${sc} im Finale gegen ${opp.n}${ul}${endBtns('Turnier neu starten')}`,'');
     else if(endKind==='lost')setMsg(`<h1>Ausgeschieden</h1>${sc} gegen ${opp.n} (Runde ${round+1} von 4)${ul}${endBtns('Turnier neu starten')}`,'');
     else{
