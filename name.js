@@ -335,6 +335,7 @@
       <div class="pp-note">Gezählt wird, solange ein Spiel offen ist – zusammen auf allen Geräten mit deinem Spielstand.</div>`;
     pop.querySelector("[data-ppname]").addEventListener("click", () => { profilZu(); fenster(false); });
     pop.querySelector("[data-ppsync]").addEventListener("click", () => { profilZu(); uebertragen(); });
+    window.dispatchEvent(new CustomEvent("sb-profil", { detail: pop }));   // z. B. Freundesliste anhängen
   }
   function profil() {
     if (pop) { profilZu(); return; }
