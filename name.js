@@ -8,7 +8,7 @@
   const URL_ = "https://hibfzyxbmbspfhpughim.supabase.co";
   const KEY = "sb_publishable_w4PzkJlkAo5WN2PrFftWvg_iN2b_Rz0";
   // gleiche Schlüssel wie „Spielstand übertragen“ im Spiel
-  const SY_KEYS = ["fnStats", "fnOutfit", "fnUnl", "fnClaimed", "fnBase", "fnRound", "fnLeague", "fnNum", "fnCol", "bl-spieler", "bl-name"];
+  const SY_KEYS = ["fnStats", "fnOutfit", "fnUnl", "fnClaimed", "fnBase", "fnRound", "fnLeague", "fnNum", "fnCol", "bl-spieler", "bl-name", "fnStatsSync"];
 
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const ls = {
@@ -157,6 +157,7 @@
         const d = await r.json();
         if (!d || typeof d !== "object" || d.v !== 1) { b.disabled = false; se.textContent = "Code ungültig, abgelaufen oder schon benutzt."; return; }
         for (const k of SY_KEYS) { if (typeof d[k] === "string") ls.set(k, d[k]); else ls.del(k); }
+        if (typeof d.fnStatsSync !== "string" && typeof d.fnStats === "string") ls.set("fnStatsSync", d.fnStats);   // Statistik nicht doppelt zählen
         for (const k of Object.keys(localStorage)) if (k.startsWith("bl-gemeldet-")) ls.del(k);
         se.classList.add("ok"); se.textContent = "Spielstand geladen! Starte neu …";
         setTimeout(() => location.reload(), 800);
@@ -232,6 +233,7 @@
         if (!d || typeof d !== "object" || d.v !== 1) { b.disabled = false; scharf = false; b.textContent = "Laden"; er.textContent = "Code ungültig, abgelaufen oder schon benutzt."; return; }
         await zeitSenden();
         for (const k of SY_KEYS) { if (typeof d[k] === "string") ls.set(k, d[k]); else ls.del(k); }
+        if (typeof d.fnStatsSync !== "string" && typeof d.fnStats === "string") ls.set("fnStatsSync", d.fnStats);   // Statistik nicht doppelt zählen
         for (const k of Object.keys(localStorage)) if (k.startsWith("bl-gemeldet-")) ls.del(k);
         ls.del("sb-name-ok");
         er.className = "err ok"; er.textContent = "Spielstand geladen! Starte neu …";
