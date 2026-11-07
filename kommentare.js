@@ -123,7 +123,7 @@
         </div>
         <textarea maxlength="${MAXLEN}" rows="3" data-ktext placeholder="Was gefällt dir? Was fehlt dir?" aria-label="Dein Text"></textarea>
         <div class="kb-row">
-          <input maxlength="16" data-kname placeholder="Dein Name" aria-label="Dein Name" autocomplete="nickname">
+          <span class="kb-wer" data-kwer></span>
           <button class="btn primary sm" type="submit" data-ksend>Absenden</button>
           <span class="kb-cnt" data-kcnt>0 / ${MAXLEN}</span>
         </div>
@@ -134,10 +134,15 @@
       <div class="kb-list" data-klist><div class="kb-leer">Lade Beiträge …</div></div>`;
 
     const $ = s => box.querySelector(s);
-    const nameIn = $("[data-kname]"), textIn = $("[data-ktext]");
-    nameIn.value = (ls.get("bl-name") || "").trim();
+    const textIn = $("[data-ktext]");
+    const meinName = () => (window.SB_NAME ? window.SB_NAME.get() : (ls.get("bl-name") || "").trim());
+    function wer() {
+      const n = meinName();
+      $("[data-kwer]").innerHTML = n ? `Du schreibst als <b>${esc(n)}</b> · <button type="button" class="linkbtn" data-kname>ändern</button>` : `<button type="button" class="linkbtn" data-kname>Spielernamen wählen</button>`;
+    }
+    window.addEventListener("sb-name", () => { if (box.isConnected) { wer(); neuLaden(); } });
     // Tasten in den Feldern nicht an die Seite weitergeben (z. B. „/“ für die Suche)
-    for (const el of [nameIn, textIn]) el.addEventListener("keydown", e => { if (e.key !== "Escape") e.stopPropagation(); });
+    for (const el of [textIn]) el.addEventListener("keydown", e => { if (e.key !== "Escape") e.stopPropagation(); });
     textIn.addEventListener("input", () => { $("[data-kcnt]").textContent = textIn.value.length + " / " + MAXLEN; });
 
     const eigeneRez = () => (S.liste || []).find(k => k.art === "rezension" && S.meinH && k.kennung === S.meinH);
@@ -194,6 +199,7 @@
     box.addEventListener("click", async e => {
       const t = e.target.closest("button"); if (!t || !box.contains(t)) return;
       e.stopPropagation();
+      if (t.dataset.kname !== undefined) { if (window.SB_NAME) window.SB_NAME.aendern(); return; }
       if (t.dataset.ktyp) { S.typ = t.dataset.ktyp; S.msg = ""; formZeichnen(); return; }
       if (t.dataset.kstern) {
         S.sterne = +t.dataset.kstern; S.msg = "";
@@ -213,22 +219,21 @@
     $("form").addEventListener("submit", async e => {
       e.preventDefault(); e.stopPropagation();
       if (S.senden) return;
-      const name = nameIn.value.replace(/\s+/g, " ").trim(), text = textIn.value.trim();
+      const name = meinName(), text = textIn.value.trim();
       S.ok = false;
       if (S.typ === "rezension" && !S.sterne) S.msg = "Bitte vergib zuerst 1 bis 5 Sterne.";
       else if (text.length < 3) S.msg = "Bitte schreib ein paar Worte (mindestens 3 Zeichen).";
-      else if (name.length < 2) S.msg = "Bitte gib einen Namen mit mindestens 2 Zeichen ein.";
+      else if (name.length < 2) { S.msg = "Bitte wähle zuerst deinen Spielernamen."; if (window.SB_NAME) window.SB_NAME.aendern(); }
       else S.msg = "";
       if (S.msg) { formZeichnen(); return; }
       S.senden = true; formZeichnen();
       try {
         await rpc("kommentar_schreiben", { p_spieler: spielerId(), p_bereich: bereich, p_art: S.typ, p_sterne: S.typ === "rezension" ? S.sterne : null, p_name: name, p_text: text });
-        if (!(ls.get("bl-name") || "").trim()) ls.set("kb-name", name);
         textIn.value = ""; textIn.dispatchEvent(new Event("input")); S.sterne = 0;
         S.msg = "Danke für deinen Beitrag!"; S.ok = true; S.filter = ""; S.alle = false;
         await neuLaden();
       } catch (err) {
-        S.msg = err.code === "filter_kontakt" ? "Links, E-Mail-Adressen, Telefonnummern, IP-Adressen und @Namen sind nicht erlaubt. Bitte entferne sie (auch aus deinem Namen)."
+        S.msg = err.code === "filter_kontakt" ? "Links, E-Mail-Adressen, Telefonnummern, IP-Adressen und @Namen sind nicht erlaubt. Bitte entferne sie."
           : err.code === "filter_beleidigung" ? "Dein Beitrag enthält Wörter, die hier nicht erlaubt sind. Bitte formuliere ihn freundlich."
           : err.code === "zu_schnell" ? "Nicht so schnell – warte kurz, bevor du den nächsten Beitrag schreibst."
           : err.code === "zu_viele" ? "Du hast heute schon sehr viele Beiträge geschrieben. Versuch es morgen wieder."
@@ -238,8 +243,7 @@
       S.senden = false; formZeichnen();
     });
 
-    if (!nameIn.value) nameIn.value = (ls.get("kb-name") || "").trim();
-    formZeichnen(); neuLaden();
+    wer(); formZeichnen(); neuLaden();
   }
 
   // ---------- Einbauen: Startseite + Detail-Fenster ----------
