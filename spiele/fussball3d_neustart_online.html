@@ -931,7 +931,7 @@ function sync(dt){
       const r=ON.abort?'Spiel abgebrochen':score[0]>score[1]?'Du gewinnst!':score[0]<score[1]?ON.oppName+' gewinnt':'Unentschieden';
       const re=ON.gone?'':`<button class="mb bt" data-adv="1">${ON.want[0]?'Warte auf '+escH(ON.oppName)+' …':'Revanche (Enter)'}</button>`;
       const hint=ON.gone?'<div class="mh">'+escH(ON.oppName)+' hat das Spiel verlassen.</div>':(ON.want[1]&&!ON.want[0]?'<div class="mh">'+escH(ON.oppName)+' möchte eine Revanche!</div>':'');
-      setMsg(`<h1>${escH(r)}</h1>${sc} gegen ${escH(ON.oppName)}${ON.abort?'':ul}<div class="lo">${re}<button class="mb bt" data-tomenu="1">Menü (M)</button></div>${hint}`,'');
+      setMsg(`<h1>${escH(r)}</h1>${sc} gegen ${escH(ON.oppName)}${ON.abort?'':ul}<div class="lo"><button class="mb bt" data-tomenu="1">Menü (M)</button>${re}</div>${hint}`,'');
     }
     else if(endKind==='won')setMsg(`<h1>Weiter!</h1>${sc} gegen ${opp.n}<br>Nächster Gegner: ${OPP[round+1].n}${ul}<div class="lo"><button class="mb bt" data-tomenu="1">Menü (M)</button><button class="mb bt" data-adv="1">Nächstes Spiel (Enter)</button></div>`,'');
     else if(endKind==='champ')setMsg(`<h1>Turniersieger!</h1>${sc} im Finale gegen ${opp.n}${ul}${endBtns('Turnier neu starten')}`,'');
