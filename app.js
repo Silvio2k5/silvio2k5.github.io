@@ -14,6 +14,33 @@
     addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
   }
 
+  // Handy: Spiel ohne Website-Leiste (und auf Android im echten Vollbild); das Vollbild-Symbol im Spiel schaltet um
+  const touch = matchMedia('(pointer:coarse)').matches;
+  const immCss = document.createElement('style');
+  immCss.textContent = '#player.imm .pbar{display:none}#player.imm{background:#000}';
+  head.appendChild(immCss);
+  const player = document.getElementById('player');
+  let fsByUs = false;
+  function setImm(on) {
+    if (!player) return;
+    player.classList.toggle('imm', on);
+    try {
+      if (on && !document.fullscreenElement && player.requestFullscreen) { fsByUs = true; player.requestFullscreen().catch(() => { fsByUs = false; }); }
+      else if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    } catch (_) {}
+  }
+  if (player && touch) {
+    new MutationObserver(() => { if (player.hidden) { player.classList.remove('imm'); fsByUs = false; } else setImm(true); })
+      .observe(player, { attributes: true, attributeFilter: ['hidden'] });
+  }
+  addEventListener('message', e => {
+    if (e.origin !== location.origin || !e.data || e.data.fb !== 'imm' || !player || player.hidden) return;
+    setImm(!player.classList.contains('imm'));
+  });
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && fsByUs) { fsByUs = false; if (player) player.classList.remove('imm'); }
+  });
+
   const standalone = () => matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
   if (standalone()) return;
 
