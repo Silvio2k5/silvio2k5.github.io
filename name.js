@@ -8,7 +8,7 @@
   const URL_ = "https://hibfzyxbmbspfhpughim.supabase.co";
   const KEY = "sb_publishable_w4PzkJlkAo5WN2PrFftWvg_iN2b_Rz0";
   // gleiche Schlüssel wie „Spielstand übertragen“ im Spiel
-  const SY_KEYS = ["fnStats", "fnOutfit", "fnUnl", "fnClaimed", "fnBase", "fnRound", "fnLeague", "fnNum", "fnCol", "bl-spieler", "bl-name", "fnStatsSync"];
+  const SY_KEYS = ["fnStats", "fnOutfit", "fnUnl", "fnClaimed", "fnBase", "fnRound", "fnLeague", "fnNum", "fnCol", "bl-spieler", "bl-name", "fnStatsSync", "fnWM"];
 
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const ls = {
