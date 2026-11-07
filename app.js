@@ -62,6 +62,55 @@
   new MutationObserver(badges).observe(document.body, { childList: true, subtree: true });
   badges();
 
+  // Aufrufe pro Spiel: wird beim Spielstart gezählt (pro Gerät höchstens alle 30 Minuten) und mit Augensymbol angezeigt
+  const SB_URL = 'https://hibfzyxbmbspfhpughim.supabase.co', SB_KEY = 'sb_publishable_w4PzkJlkAo5WN2PrFftWvg_iN2b_Rz0';
+  const views = {};
+  const viewCss = document.createElement('style');
+  viewCss.textContent = '.vcount{display:inline-flex;align-items:center;gap:5px;color:var(--dim);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}.vcount svg{flex:none;opacity:.85}.cbody .vcount{margin-top:auto;padding-top:4px}';
+  head.appendChild(viewCss);
+  const EYE = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const viewText = id => { const n = views[id] || 0; return n.toLocaleString('de-DE') + (n === 1 ? ' Aufruf' : ' Aufrufe'); };
+  function viewEl(id, tag) {
+    const e = document.createElement(tag || 'span'); e.className = 'vcount'; e.dataset.vid = id;
+    e.innerHTML = EYE + '<span></span>'; e.lastChild.textContent = viewText(id); return e;
+  }
+  function showViews() {
+    document.querySelectorAll('.card[data-open]').forEach(c => {
+      const id = c.dataset.open, b = c.querySelector('.cbody');
+      if (b && !b.querySelector('.vcount')) b.appendChild(viewEl(id));
+    });
+    const hero = document.querySelector('.hero'), hid = hero && hero.querySelector('[data-open]');
+    if (hid) { const m = hero.querySelector('.metarow'); if (m && !m.querySelector('.vcount')) m.appendChild(viewEl(hid.dataset.open)); }
+    const det = document.querySelector('#modalRoot .detail'), did = decodeURIComponent((location.hash || '').slice(1));
+    if (det && did) { const f = det.querySelector('.facts'); if (f && !f.querySelector('.vcount')) f.prepend(viewEl(did)); }
+    document.querySelectorAll('.vcount[data-vid]').forEach(e => { const t = viewText(e.dataset.vid); if (e.lastChild.textContent !== t) e.lastChild.textContent = t; });
+  }
+  async function loadViews() {
+    try {
+      const r = await fetch(SB_URL + '/rest/v1/aufrufe?select=spiel,anzahl', { headers: { apikey: SB_KEY } });
+      if (!r.ok) return;
+      for (const x of await r.json()) views[x.spiel] = Number(x.anzahl) || 0;
+      showViews();
+    } catch (_) {}
+  }
+  async function countView(id) {
+    if (!/^[a-z0-9-]{1,40}$/.test(id || '')) return;
+    let last = 0; try { last = +localStorage.getItem('sb-aufruf-' + id) || 0; } catch (_) {}
+    if (Date.now() - last < 30 * 60 * 1000) return;
+    try { localStorage.setItem('sb-aufruf-' + id, String(Date.now())); } catch (_) {}
+    try {
+      const r = await fetch(SB_URL + '/rest/v1/rpc/zaehle_aufruf', { method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_spiel: id }) });
+      if (r.ok) { views[id] = Number(await r.json()) || views[id] || 0; showViews(); }
+    } catch (_) {}
+  }
+  document.addEventListener('click', e => {
+    const p = e.target.closest && e.target.closest('[data-play]');
+    if (p) { countView(p.dataset.play); return; }
+    if (e.target.closest && e.target.closest('[data-dplay]')) countView(decodeURIComponent((location.hash || '').slice(1)));
+  }, true);
+  new MutationObserver(showViews).observe(document.body, { childList: true, subtree: true });
+  showViews(); loadViews();
+
   const standalone = () => matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true;
   if (standalone()) return;
 
