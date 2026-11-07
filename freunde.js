@@ -38,7 +38,7 @@
   const css = document.createElement("style");
   css.textContent = `
   .pp{max-height:calc(100vh - 84px);overflow:auto}
-  .fr{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+  .fr{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 0}
   .fr-code{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--dim)}
   .fr-code b{font-family:var(--mono);font-size:18px;letter-spacing:2px;color:var(--coin)}
   .fr-code .sp{flex:1}
@@ -187,7 +187,8 @@
   window.addEventListener("sb-profil", e => {
     const pop = e.detail; if (!pop) return;
     box = document.createElement("div"); box.className = "fr";
-    pop.appendChild(box);
+    const zeit = pop.querySelector(".pp-lbl");   // vor „Gespielte Zeit“ einfügen
+    if (zeit) pop.insertBefore(box, zeit); else pop.appendChild(box);
     zeichnen(); laden();
   });
   // Link mit ?freund=CODE: Anfrage automatisch senden (sobald ein Name gewählt ist)
