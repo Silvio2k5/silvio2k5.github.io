@@ -82,7 +82,8 @@
   .pp-bar i{display:block;height:100%;background:var(--coin);border-radius:2px}
   .pp-leer{color:var(--dim);font-size:14px}
   .pp-note{font-size:11px;color:var(--dim)}
-  @media (max-width:760px){#nameBtn .lbl{display:none}#nameBtn{width:40px;padding:0}}`;
+  @media (max-width:760px){#nameBtn .lbl{display:none}#nameBtn{width:40px;padding:0}}
+  .pp input{font-size:16px}   /* sonst zoomt Safari beim Antippen hinein */`;
   document.head.appendChild(css);
 
   function melden(n) { window.dispatchEvent(new CustomEvent("sb-name", { detail: n })); knopf(); }
@@ -354,8 +355,19 @@
   }
   document.addEventListener("mousedown", e => { if (pop && !pop.contains(e.target) && !e.target.closest("#nameBtn")) profilZu(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape") profilZu(); });
-  addEventListener("resize", profilZu);
-  addEventListener("scroll", profilZu, { passive: true });
+  // Am Handy öffnet/schließt sich beim Tippen in ein Feld die Tastatur. Dabei verschiebt Safari die Seite
+  // (scroll) und ändert die Fensterhöhe (resize). Das darf das Profil NICHT schließen.
+  let breite = innerWidth, ruhe = 0;
+  const tippt = () => pop && pop.contains(document.activeElement) && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
+  const ruhig = () => tippt() || Date.now() < ruhe;
+  document.addEventListener("focusin", e => { if (pop && pop.contains(e.target)) ruhe = Date.now() + 1500; });
+  document.addEventListener("focusout", e => { if (pop && pop.contains(e.target)) ruhe = Date.now() + 1500; });
+  document.addEventListener("touchstart", e => { if (pop && pop.contains(e.target)) ruhe = Date.now() + 1500; }, { passive: true, capture: true });
+  addEventListener("resize", () => {
+    if (innerWidth === breite || ruhig()) { breite = innerWidth; return; }   // nur echte Breitenänderung (z. B. Handy drehen)
+    breite = innerWidth; profilZu();
+  });
+  addEventListener("scroll", () => { if (!ruhig()) profilZu(); }, { passive: true });
 
   window.SB_NAME = { get: getName, aendern: () => fenster(false), zeiten };
 
