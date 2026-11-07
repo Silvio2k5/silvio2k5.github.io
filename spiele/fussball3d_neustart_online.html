@@ -747,7 +747,7 @@ function finish(){
   }
   if(lg){stats.lgp++;stats.lgg+=score[0];if(score[0]>score[1]){stats.lw++;if(score[1]===0)stats.lcs++;}}
   saveStats();if(lg){recordLeague();if(league.round>=14){stats.lsn++;if(lgSorted()[0].i===0){stats.lgw++;cerStart('league');}saveStats();}}
-  {const n=(lsG('bl-name')||'').trim();if(n.length>=2)lbMelden(n).catch(()=>{});}
+  statSync().then(()=>{const n=(lsG('bl-name')||'').trim();if(n.length>=2)lbMelden(n).catch(()=>{});});
   const gt=grant();unlockMsg=(gt.length?'Neu freigeschaltet: '+gt.join(', '):'')+(newRound?(gt.length?' · ':'')+'Neue Aufgaben!':'');
 }
 function move(p,dx,dy,sp,dt){
@@ -1253,7 +1253,7 @@ document.getElementById('snd').onclick=function(){auToggle();this.blur();};
 addEventListener('keydown',e=>{if(!typing(e)&&e.code==='KeyN')auToggle();});
 /* ---------- Spielstand übertragen (kurzer Code über Supabase) ---------- */
 const SY_URL='https://hibfzyxbmbspfhpughim.supabase.co',SY_KEY='sb_publishable_w4PzkJlkAo5WN2PrFftWvg_iN2b_Rz0';
-const SY_KEYS=['fnStats','fnOutfit','fnUnl','fnClaimed','fnBase','fnRound','fnLeague','fnNum','fnCol','bl-spieler','bl-name'];
+const SY_KEYS=['fnStats','fnOutfit','fnUnl','fnClaimed','fnBase','fnRound','fnLeague','fnNum','fnCol','bl-spieler','bl-name','fnStatsSync'];
 let syArm=false;
 function syncHtml(){
   return `<h1>Spielstand übertragen</h1><div style="font-size:14px;opacity:.85">Spiel auf dem PC weiter, wo du am Handy aufgehört hast – und umgekehrt.</div>
@@ -1276,6 +1276,7 @@ const syHead=()=>({apikey:SY_KEY,'Content-Type':'application/json'});
 function syncOpen(){syArm=false;state='sync';}
 async function syncMake(){
   const st=$s('syMakeSt');st.className='st';st.textContent='Erstelle Code …';
+  await statSync();
   const d={v:1};for(const k of SY_KEYS){try{const v=localStorage.getItem(k);if(v!==null)d[k]=v;}catch(e){}}
   try{
     const r=await fetch(SY_URL+'/rest/v1/rpc/spielstand_speichern',{method:'POST',headers:syHead(),body:JSON.stringify({p_daten:d})});
@@ -1301,6 +1302,7 @@ async function syncLoad(){
     const d=await r.json();
     if(!d||typeof d!=='object'||d.v!==1){b.disabled=false;syArm=false;b.textContent='Spielstand laden';st.className='st bad';st.textContent='Code ungültig, abgelaufen oder schon benutzt.';return;}
     for(const k of SY_KEYS){try{if(typeof d[k]==='string')localStorage.setItem(k,d[k]);else localStorage.removeItem(k);}catch(e){}}
+    try{if(typeof d.fnStatsSync!=='string'&&typeof d.fnStats==='string')localStorage.setItem('fnStatsSync',d.fnStats);}catch(e){}
     try{for(const k of Object.keys(localStorage))if(k.startsWith('bl-gemeldet-'))localStorage.removeItem(k);}catch(e){}
     st.className='st good';st.textContent='Spielstand geladen! Starte neu …';
     setTimeout(()=>location.reload(),900);
@@ -1339,7 +1341,7 @@ async function lbLoad(){
   const box=$s('lbBox');if(!box)return;
   const name=(lsG('bl-name')||'').trim();
   $s('lbName').value=name;$s('lbSave').textContent=name?'Namen ändern':'Mitmachen';
-  $s('lbInfo').textContent='Deine Siege auf diesem Gerät: '+stats.wins+(name?'':' · Gib einen Namen ein, um mitzumachen.');
+  $s('lbInfo').textContent='Deine Siege: '+stats.wins+(name?'':' · Gib einen Namen ein, um mitzumachen.');
   let err='';
   if(name.length>=2){try{await lbMelden(name);}catch(e){if(e.vergeben)err='Dein Name ist inzwischen vergeben – bitte wähle einen anderen.';}}
   try{
@@ -1607,6 +1609,31 @@ function tEnd(e){
 }
 for(const t of['pointerup','pointercancel','lostpointercapture'])tc.addEventListener(t,tEnd);
 tc.addEventListener('contextmenu',e=>e.preventDefault());
+/* ---------- Statistik pro Konto: Siege, Tore usw. werden über alle Geräte zusammengezählt ---------- */
+const ST_ADD=['wins','goals','tour','wk','big','losses','conc','games','cs','gg','lgw','lw','lgp','lgg','lcs','lsn'];
+let stLauf=false;
+async function statSync(){
+  if(stLauf)return;stLauf=true;
+  try{
+    let last=null;try{last=JSON.parse(lsG('fnStatsSync')||'null');}catch(e){}
+    const sent={},delta={};
+    for(const k of ST_ADD){sent[k]=Math.max(0,Number(stats[k])||0);delta[k]=Math.max(0,sent[k]-(last?Number(last[k])||0:0));}
+    const mx={bwm:Number(stats.bwm)||0,bws:String(stats.bws||''),blm:Number(stats.blm)||0,bls:String(stats.bls||''),bstr:Number(stats.bstr)||0};
+    const r=await fetch(SY_URL+'/rest/v1/rpc/stats_melden',{method:'POST',headers:syHead(),body:JSON.stringify({p_spieler:lbId(),p_spiel:'fussball-3d',p_delta:delta,p_max:mx})});
+    if(!r.ok)throw 0;
+    const t=await r.json();if(!t||typeof t!=='object')throw 0;
+    const syn={};
+    for(const k of ST_ADD){const tv=Number(t[k])||0;syn[k]=tv;stats[k]=tv+Math.max(0,(Number(stats[k])||0)-sent[k]);}
+    if((Number(t.bwm)||0)>(Number(stats.bwm)||0)){stats.bwm=Number(t.bwm);stats.bws=t.bws||stats.bws;}
+    if((Number(t.blm)||0)>(Number(stats.blm)||0)){stats.blm=Number(t.blm);stats.bls=t.bls||stats.bls;}
+    if((Number(t.bstr)||0)>(Number(stats.bstr)||0))stats.bstr=Number(t.bstr);
+    saveStats();lsS('fnStatsSync',JSON.stringify(syn));
+    try{grant();}catch(e){}
+  }catch(e){}
+  stLauf=false;
+}
+setTimeout(statSync,1200);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state!=='play')statSync();});
 /* ---------- Einladung aus der Spielbibliothek (?einladung=RAUM&rolle=host|gast) ---------- */
 (()=>{const q=new URLSearchParams(location.search),r=(q.get('einladung')||'').toUpperCase(),host=q.get('rolle')==='host';
   if(!/^[A-Z0-9]{4}$/.test(r))return;
