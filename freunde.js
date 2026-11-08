@@ -60,6 +60,17 @@
   .fr-ein{position:fixed;right:16px;bottom:16px;z-index:400;width:min(340px,calc(100vw - 32px));background:var(--shelf);border:1px solid var(--coin);border-radius:16px;box-shadow:0 24px 60px -16px rgba(0,0,0,.8);padding:14px 16px;display:flex;flex-direction:column;gap:10px;animation:frIn .25s ease-out}
   .fr-ein p{margin:0;font-size:15px}
   .fr-ein .acts{display:flex;gap:8px;justify-content:flex-end}
+  .fr-wahl{position:fixed;inset:0;z-index:500;background:rgba(5,4,15,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+  .fr-wahl .k{width:min(380px,100%);background:var(--shelf);border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 60px -16px rgba(0,0,0,.8);padding:18px;display:flex;flex-direction:column;gap:10px;animation:frIn .2s ease-out}
+  .fr-wahl h3{margin:0;font-size:18px}
+  .fr-wahl .u{margin:0;font-size:13px;color:var(--dim)}
+  .fr-wahl .g{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:8px;color:inherit;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+  .fr-wahl .g:hover,.fr-wahl .g:focus-visible{border-color:var(--coin);outline:none}
+  .fr-wahl .g:disabled{opacity:.6;cursor:default}
+  .fr-wahl .g img,.fr-wahl .g .sy{width:72px;height:40px;border-radius:8px;object-fit:cover;flex:none}
+  .fr-wahl .g .sy{display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--shelf)}
+  .fr-wahl .m{font-size:12px;min-height:1em;color:var(--danger)}
+  .fr-wahl .acts{display:flex;justify-content:flex-end}
   @keyframes frIn{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}`;
   document.head.appendChild(css);
 
@@ -90,7 +101,7 @@
       ${ein.length ? `<div class="fr-sub">Freundschaftsanfragen</div>` + ein.map(x => `<div class="fr-row"><span class="n">${esc(x.name)}</span>
           <button class="btn sm primary" type="button" data-frja="${esc(x.code)}">Annehmen</button><button class="fr-x" type="button" data-frnein="${esc(x.code)}" title="Ablehnen">✕</button></div>`).join("") : ""}
       ${fr.length ? fr.map(x => `<div class="fr-row"><span class="fr-dot${x.online ? " on" : ""}" title="${x.online ? "online" : "offline"}"></span><span class="n">${esc(x.name)}</span>
-          ${ONLINE.map(id => `<button class="btn sm" type="button" data-frein="${esc(x.code)}" data-frspiel="${esc(id)}" title="Zu ${esc(titel(id))} einladen">🎮 Einladen</button>`).join("")}
+          <button class="btn sm" type="button" data-frwahl="${esc(x.code)}" data-frname="${esc(x.name)}" title="Zu einem Online-Spiel einladen">🎮 Einladen</button>
           <button class="fr-x" type="button" data-frweg="${esc(x.code)}" title="Freund entfernen">✕</button></div>`).join("")
         : (D ? `<div class="fr-leer">Noch keine Freunde. Teile deinen Code oder gib den Code eines Freundes ein.</div>` : `<div class="fr-leer">Lade Freunde …</div>`)}
       ${aus.length ? `<div class="fr-leer">Wartet auf Bestätigung: ${aus.map(x => `${esc(x.name)} <button class="fr-x" type="button" data-frweg="${esc(x.code)}" title="Anfrage zurückziehen">✕</button>`).join(", ")}</div>` : ""}`;
@@ -136,8 +147,44 @@
       if (!t.classList.contains("arm")) { t.classList.add("arm"); t.textContent = "Entfernen?"; setTimeout(() => { if (t.isConnected) { t.classList.remove("arm"); t.textContent = "✕"; } }, 4000); return; }
       try { await rpc("freund_entfernen", { p_code: t.dataset.frweg }); } catch (_) {}
       await laden();
-    } else if (t.dataset.frein) einladen(t.dataset.frein, t.dataset.frspiel, t);
+    } else if (t.dataset.frwahl) spielWahl(t.dataset.frwahl, t.dataset.frname || "");
+    else if (t.dataset.frein) einladen(t.dataset.frein, t.dataset.frspiel, t);
   }, true);
+
+  // ---------- Fenster: Spiel für die Einladung auswählen ----------
+  function spielWahl(code, name) {
+    const alt = document.querySelector(".fr-wahl"); if (alt) alt.remove();
+    const w = document.createElement("div");
+    w.className = "fr-wahl";
+    w.innerHTML = `<div class="k" role="dialog" aria-modal="true" aria-labelledby="frWT">
+      <h3 id="frWT">🎮 Mit ${esc(name)} spielen</h3>
+      <p class="u">Wähle ein Spiel – ${esc(name)} bekommt sofort eine Einladung.</p>
+      ${ONLINE.filter(id => spiel(id)).map(id => { const g = spiel(id);
+        return `<button class="g" type="button" data-wspiel="${esc(id)}">${g.titelbild ? `<img src="${esc(g.titelbild)}" alt="">` : `<span class="sy">${esc(g.symbol || "🎮")}</span>`}<span class="t">${esc(titel(id))}</span></button>`; }).join("")}
+      <div class="m"></div>
+      <div class="acts"><button class="btn sm" type="button" data-wzu>Abbrechen</button></div></div>`;
+    document.body.appendChild(w);
+    const zu = () => { w.remove(); document.removeEventListener("keydown", esc_); };
+    const esc_ = e => { if (e.key === "Escape") { e.stopPropagation(); zu(); } };
+    document.addEventListener("keydown", esc_);
+    w.addEventListener("mousedown", e => e.stopPropagation());
+    w.addEventListener("click", async e => {
+      e.stopPropagation();
+      if (e.target === w || e.target.closest("[data-wzu]")) { zu(); return; }
+      const b = e.target.closest("[data-wspiel]"); if (!b) return;
+      const id = b.dataset.wspiel, t = b.querySelector(".t"), alt = t.textContent;
+      w.querySelectorAll(".g").forEach(x => x.disabled = true); t.textContent = "Lade ein …";
+      try {
+        const raum = raumCode();
+        await rpc("einladung_senden", { p_code: code, p_spiel: id, p_raum: raum });
+        zu(); spielStarten(id, raum, "host");
+      } catch (err) {
+        w.querySelectorAll(".g").forEach(x => x.disabled = false); t.textContent = alt;
+        w.querySelector(".m").textContent = FEHLER[err.code] || FEHLER.netz;
+      }
+    });
+    const erst = w.querySelector(".g"); if (erst) erst.focus();
+  }
 
   // ---------- Einladen und Spiel starten ----------
   const raumCode = () => { const z = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let c = ""; for (let i = 0; i < 4; i++) c += z[Math.floor(Math.random() * z.length)]; return c; };
