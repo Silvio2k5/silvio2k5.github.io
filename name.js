@@ -8,7 +8,22 @@
   const URL_ = "https://hibfzyxbmbspfhpughim.supabase.co";
   const KEY = "sb_publishable_w4PzkJlkAo5WN2PrFftWvg_iN2b_Rz0";
   // gleiche Schlüssel wie „Spielstand übertragen“ im Spiel
-  const SY_KEYS = ["fnStats", "fnOutfit", "fnUnl", "fnClaimed", "fnBase", "fnRound", "fnLeague", "fnNum", "fnCol", "bl-spieler", "bl-name", "fnStatsSync", "fnWM"];
+  // Ein Code enthält den Spielstand aller Spiele. Beim Laden wird ein Spiel nur ersetzt, wenn der Code dessen Spielstand enthält.
+  const SY_GRUPPEN = {
+    fn: ["fnStats", "fnOutfit", "fnUnl", "fnClaimed", "fnBase", "fnRound", "fnLeague", "fnNum", "fnCol", "fnStatsSync", "fnWM"],
+    bb: ["bbStats", "bbOutfit", "bbUnl", "bbClaimed", "bbBase", "bbRound", "bbLeague", "bbNum", "bbCol", "bbStatsSync", "bbWM", "bbTaskVer"]
+  };
+  const SY_GEMEINSAM = ["bl-spieler", "bl-name"];
+  const SY_KEYS = [...SY_GRUPPEN.fn, ...SY_GRUPPEN.bb, ...SY_GEMEINSAM];
+  function uebernehmen(d) {
+    for (const g in SY_GRUPPEN) {
+      const ks = SY_GRUPPEN[g];
+      if (typeof d[ks[0]] !== "string") continue;           // Spiel ist im Code nicht enthalten: Spielstand hier behalten
+      for (const k of ks) { if (typeof d[k] === "string") ls.set(k, d[k]); else ls.del(k); }
+      if (typeof d[g + "StatsSync"] !== "string") ls.set(g + "StatsSync", d[ks[0]]);   // Statistik nicht doppelt zählen
+    }
+    for (const k of SY_GEMEINSAM) if (typeof d[k] === "string") ls.set(k, d[k]);
+  }
 
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const ls = {
@@ -157,8 +172,7 @@
         if (!r.ok) throw 0;
         const d = await r.json();
         if (!d || typeof d !== "object" || d.v !== 1) { b.disabled = false; se.textContent = "Code ungültig, abgelaufen oder schon benutzt."; return; }
-        for (const k of SY_KEYS) { if (typeof d[k] === "string") ls.set(k, d[k]); else ls.del(k); }
-        if (typeof d.fnStatsSync !== "string" && typeof d.fnStats === "string") ls.set("fnStatsSync", d.fnStats);   // Statistik nicht doppelt zählen
+        uebernehmen(d);
         for (const k of Object.keys(localStorage)) if (k.startsWith("bl-gemeldet-")) ls.del(k);
         se.classList.add("ok"); se.textContent = "Spielstand geladen! Starte neu …";
         setTimeout(() => location.reload(), 800);
@@ -233,8 +247,7 @@
         const d = await r.json();
         if (!d || typeof d !== "object" || d.v !== 1) { b.disabled = false; scharf = false; b.textContent = "Laden"; er.textContent = "Code ungültig, abgelaufen oder schon benutzt."; return; }
         await zeitSenden();
-        for (const k of SY_KEYS) { if (typeof d[k] === "string") ls.set(k, d[k]); else ls.del(k); }
-        if (typeof d.fnStatsSync !== "string" && typeof d.fnStats === "string") ls.set("fnStatsSync", d.fnStats);   // Statistik nicht doppelt zählen
+        uebernehmen(d);
         for (const k of Object.keys(localStorage)) if (k.startsWith("bl-gemeldet-")) ls.del(k);
         ls.del("sb-name-ok");
         er.className = "err ok"; er.textContent = "Spielstand geladen! Starte neu …";
