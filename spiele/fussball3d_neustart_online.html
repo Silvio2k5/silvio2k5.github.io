@@ -634,7 +634,6 @@ addEventListener('keydown',e=>{
   if(state==='sync'||state==='lb'||state==='onl'){if(e.code==='Escape'||e.code==='KeyM')state='menu';return;}
   keys[e.code]=true;
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
-  if(state==='play'&&!paused&&e.code==='KeyF'&&!fl.on&&!ON.on)spawnFl();
   if(state==='play'&&ON.on){if(e.code==='KeyP'||e.code==='Escape')ON.ask=!ON.ask;else if(ON.ask&&e.code==='Enter'){ON.ask=false;state='menu';return;}}
   else if(state==='play'&&(e.code==='KeyP'||e.code==='Escape'))paused=!paused;
   else if(state==='play'&&paused&&e.code==='Enter'){paused=false;state='menu';return;}
