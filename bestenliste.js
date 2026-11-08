@@ -8,7 +8,7 @@ const BL_KEY = "sb_publishable_w4PzkJlkAo5WN2PrFftWvg_iN2b_Rz0";      // der öf
 // Welche Spiele eine Bestenliste haben und wo das Spiel seine Siege speichert:
 const BL_SPIELE = {
         "fussball-3d": { speicher: "fnStats", feld: "wins", titel: "Siege" },
-        "basketball-3d": { speicher: "bbStats", feld: "wins", titel: "Siege" }
+        "basketball-3d": { speicher: "bbStats", feld: "wins", titel: "Siege", tore: "Punkte" }
 };
 
 // ================================================================
@@ -77,9 +77,11 @@ const BL_SPIELE = {
 
    // ---------- Ranglisten je Statistik ----------
    const sieg = t => { const m = /^\s*(\d+)\s*:\s*(\d+)/.exec(t || ""); return m ? [+m[1] - +m[2], +m[1]] : [-1, -1]; };
+   // Basketball zählt Punkte statt Tore
+   const punkte = () => ((BL_SPIELE[offen] || {}).tore === "Punkte");
    const KAT = [
              { id: "siege", t: "Siege", wert: e => Number(e.siege) || 0, text: v => v + (v === 1 ? " Sieg" : " Siege") },
-             { id: "tore", t: "Tore", wert: e => Number(e.tore) || 0, text: v => v + (v === 1 ? " Tor" : " Tore") },
+             { id: "tore", get t() { return punkte() ? "Punkte" : "Tore"; }, wert: e => Number(e.tore) || 0, text: v => v + (punkte() ? (v === 1 ? " Punkt" : " Punkte") : (v === 1 ? " Tor" : " Tore")) },
              { id: "pokale", t: "Pokale", wert: e => Number(e.pokale) || 0, text: v => v + (v === 1 ? " Pokal" : " Pokale") },
              { id: "sieg", t: "Höchster Sieg", wert: e => sieg(e.hoechster_sieg), text: (v, e) => e.hoechster_sieg ? esc(e.hoechster_sieg) : "–" },
              { id: "serie", t: "Siegesserie", wert: e => Number(e.serie) || 0, text: v => v + (v === 1 ? " Sieg" : " Siege") + " in Folge" }
