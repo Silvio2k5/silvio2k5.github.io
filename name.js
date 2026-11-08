@@ -113,7 +113,7 @@
     back.innerHTML = `<div class="nm" role="dialog" aria-modal="true" aria-labelledby="nmT">
       <div class="ic">🎮</div>
       <h2 id="nmT">${pflicht ? "Willkommen in der Spielbibliothek!" : "Spielername ändern"}</h2>
-      <p>${pflicht ? "Wähle zuerst deinen Spielernamen." : "Dein neuer Name wird überall übernommen."} Er erscheint in den Bestenlisten, bei Online-Spielen und bei deinen Rezensionen.</p>
+      <p>${pflicht ? "Wähle zuerst deinen Spielernamen." : "Dein neuer Name wird überall übernommen."} Er erscheint in den Bestenlisten, bei Online-Spielen und bei deinen Rezensionen.${pflicht ? " Du kannst ihn jederzeit oben rechts über deinen Namen ändern. Alle Fortschritte aus den Spielen werden automatisch gespeichert." : ""}</p>
       <input id="nmIn" maxlength="16" placeholder="Dein Spielername" autocomplete="nickname" spellcheck="false" value="${esc(alt)}" aria-label="Dein Spielername">
       <div class="err" id="nmErr">${hinweis ? esc(hinweis) : ""}</div>
       <div class="hint">2–16 Zeichen. Der Name muss einzigartig sein.</div>
