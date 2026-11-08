@@ -1048,7 +1048,9 @@ function update(dt){
   if(noteT>0)noteT-=dt;
   for(const n of nets)n.k=Math.max(0,n.k-dt*2);
   if(pause>0){pause-=dt;if(!ball.own&&!ball.air)freeBall(dt);if(pause<=0){if(golden)finish();else reset(lastGoal===0?cpu:me);}return;}
-  if(!golden){time=Math.max(0,time-dt);if(time<=0&&!ball.air){if(score[0]===score[1]){golden=true;note('Verlängerung! Der nächste Korb gewinnt');}else{finish();return;}}}
+  if(!golden){const t0=time;time=Math.max(0,time-dt);
+    if(t0>0&&time<=0&&ball.air&&ball.air.by){note('Schlusssirene! Der Wurf in der Luft zählt noch …');try{SND.buzzer();}catch(e){}AT.bz=true;}
+    if(time<=0&&!ball.air){if(score[0]===score[1]){golden=true;note('Verlängerung! Der nächste Korb gewinnt');}else{finish();return;}}}
   let dx=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);
   let dy=(keys.ArrowDown||keys.KeyS?1:0)-(keys.ArrowUp||keys.KeyW?1:0);
   if(!dx&&!dy&&J.id!==null&&Math.hypot(J.dx,J.dy)>0.18){dx=J.dx;dy=J.dy;}
@@ -1476,7 +1478,8 @@ function audioTick(){
   try{
     if(state!==AT.st){
       if(state==='play'&&AT.st!=='play')SND.whistle(false);
-      else if(state==='end'&&AT.st==='play'){SND.buzzer();SND.jingle(score[0]>score[1]);}
+      else if(state==='end'&&AT.st==='play'){if(!AT.bz)SND.buzzer();SND.jingle(score[0]>score[1]);}
+      if(state==='play'&&AT.st!=='play')AT.bz=false;
       AT.st=state;
     }
     if(pause>0&&AT.pause<=0&&state==='play')SND.goal();
