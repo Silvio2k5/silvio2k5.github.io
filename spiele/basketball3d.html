@@ -162,8 +162,8 @@ const typing=e=>e.target&&e.target.tagName==='INPUT'&&e.target.type==='text';
 const OPP=[
   {n:'Anfänger',col:0x8fbf5f,sp:130,acc:0.72,stl:0.14,kick:1.7,err:45,rng:[40,110],prot:1},
   {n:'Amateur',col:0xe0a030,sp:160,acc:0.84,stl:0.22,kick:1.25,err:28,rng:[50,150],prot:0.85},
-  {n:'Profi',col:0xd63a2f,sp:190,acc:0.94,stl:0.3,kick:0.95,err:12,rng:[60,200],prot:0.72},
-  {n:'Weltklasse',col:0x7a2fc2,sp:215,acc:1.03,stl:0.38,kick:0.7,err:0,rng:[60,235],prot:0.6}
+  {n:'Profi',col:0xd63a2f,sp:172,acc:0.88,stl:0.26,kick:1.1,err:20,rng:[55,170],prot:0.78},
+  {n:'Weltklasse',col:0x7a2fc2,sp:185,acc:0.92,stl:0.3,kick:0.95,err:13,rng:[60,195],prot:0.72}
 ];
 let state='menu',score=[0,0],time=90,pause=0,cd=0,stuck=0,mcd=0,pcd=0,tour=false,round=0,golden=false,endKind='',aT=0,aex=0,aey=0,opp=OPP[2],paused=false,menuSel=0,qd=2,shotClock=12,spaceHit=false,shootHit=false,spaceBuf=0,scoreTxt='KORB!',noteTxt='',noteT=0,noteSh=true;
 const me={x:200,y:H/2,r:16,vx:0,vy:0,fx:1,fy:0},cpu={x:600,y:H/2,r:16,vx:0,vy:0,fx:-1,fy:0},ball={x:W/2,y:H/2,z:7.5,r:7.5,vx:0,vy:0,vz:0,own:null,air:null,ph:0};
