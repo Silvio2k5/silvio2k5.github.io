@@ -690,7 +690,7 @@ const SETS=[[
   {t:'Gewinne, ohne mehr als 1 Spiel pro Satz abzugeben',v:s=>s.cs,max:1},
   {t:'Punkte 15-mal mit einem Volley',v:s=>s.stl,max:15},
   {t:'Spiele 14 Ligamatches',v:s=>s.lgp,max:14},
-  {t:'Erreiche das WM-Halbfinale',v:s=>s.wmhf,max:1}
+  {t:'Erreiche das WM-Finale',v:s=>s.wmhf,max:1}
 ],[
   {t:'Beende eine Liga-Saison',v:s=>s.lsn,max:1},
   {t:'Gewinne 5 Online-Matches',v:s=>s.onw,max:5},
@@ -720,7 +720,7 @@ const SETS=[[
   {t:'Werde Ligameister',v:s=>s.lgw,max:1},
   {t:'Werde 3-mal Weltmeister',v:s=>s.wmw,max:3},
   {t:'Werde Weltmeister ohne Niederlage',v:s=>s.wmun,max:1},
-  {t:'Erreiche 3-mal das WM-Halbfinale',v:s=>s.wmhf,max:3}
+  {t:'Erreiche 3-mal das WM-Finale',v:s=>s.wmhf,max:3}
 ]];
 const TASKS=SETS[0].slice();
 let done0=0,unlockMsg='',wardMsg='';
@@ -1642,9 +1642,8 @@ const hall={t:0,led:null,led2:null,jx:null,jt:null,ads:null};
   ['ASS!','◆','AUF GEHT\'S!','◆','SPIEL, SATZ UND SIEG!','◆','RUHE BITTE!','◆'].reduce((x,t,i)=>{lx.fillStyle=HCOL[(i*3)%8];lx.fillText(t,x,33);return x+lx.measureText(t).width+28;},16);
   const lt=new THREE.CanvasTexture(lc);lt.wrapS=THREE.RepeatWrapping;lt.repeat.set(5,1);hall.led=lt;
   M(new THREE.PlaneGeometry(2*SX,1.6),new THREE.MeshBasicMaterial({map:lt}),0,TOP+1.0,BZ+0.05);
-  M(new THREE.PlaneGeometry(114.8,3.5),new THREE.MeshBasicMaterial({map:lt}),0,6.95,-38.08);
   const lt2=lt.clone();lt2.needsUpdate=true;lt2.repeat.set(4,1);hall.led2=lt2;
-  for(const s of[-1,1]){M(new THREE.PlaneGeometry(-2*BZ,1.6),new THREE.MeshBasicMaterial({map:lt2}),s*(SX-0.05),TOP+1.0,0,-s*Math.PI/2);M(new THREE.PlaneGeometry(78.8,3.5),new THREE.MeshBasicMaterial({map:lt2}),s*56.08,6.95,0,-s*Math.PI/2);}
+  for(const s of[-1,1]){M(new THREE.PlaneGeometry(-2*BZ,1.6),new THREE.MeshBasicMaterial({map:lt2}),s*(SX-0.05),TOP+1.0,0,-s*Math.PI/2);}
   /* Logenreihe mit beleuchteten Fenstern */
   const winM=new THREE.MeshBasicMaterial({color:0xd9b46a}),offM=new THREE.MeshBasicMaterial({color:0x2a2f38});
   M(new THREE.BoxGeometry(2*SX,3.2,0.6),dark,0,TOP+3.8,BZ+0.3);
@@ -1857,12 +1856,13 @@ function tselHtml(){
   const lauf=wm&&!wmFertig();
   return '<h1>Turnier</h1>'
     +b(0,'🏆 Pokal','ffd34d','4 Runden: Anfänger, Amateur, Profi, Weltklasse')
-    +b(1,lauf?'🌍 Weltmeisterschaft fortsetzen':'🌍 Weltmeisterschaft','ff9a3c',lauf?wmStufe():'32 Teams · Gruppenphase und K.-o.-Runde')
+    +b(1,lauf?'🌍 Weltmeisterschaft fortsetzen':'🌍 Weltmeisterschaft','ff9a3c',lauf?wmStufe():'8 Teams · Gruppenphase, Halbfinale und Finale')
     +'<div class="mh">↑ ↓ wählen · Enter starten · oder anklicken</div>'
     +'<div class="lo"><button class="mb sm" data-tback="1">Zurück zum Menü (M)</button></div>';
 }
 function tselGo(i){if(i===0)startTour();else wmOpen();}
-/* ---------- Weltmeisterschaft: 32 Teams, 8 Gruppen, Achtelfinale bis Finale ----------
+/* ---------- Weltmeisterschaft: 8 Teams, 2 Gruppen, Halbfinale und Finale ----------
+   Die 7 Gegner werden bei jeder WM neu aus dem Pool unten ausgelost.
    Alle Ländernamen sind ausgedacht. Farben nur aus der vorhandenen Palette.
    Gespielt wird auf 2 Gewinnsätze, unentschieden gibt es also nicht. */
 const WMT=[
@@ -1871,10 +1871,10 @@ const WMT=[
   ['Sandara',1,1.12],['Westhafen',1,1.1],['Glutland',1,1.08],['Hochgipfel',1,1.05],['Polarien',1,1.02],['Bernsteinküste',1,1.0],['Rosenhain',1,0.98],['Ostwald',1,0.95],
   ['Nebelinsel',0,0.82],['Südmeer',0,0.8],['Mondland',0,0.78],['Tannenland',0,0.75],['Steppenau',0,0.72],['Palmeninsel',0,0.7],['Wüstenstein',0,0.68],['Sternfall',0,0.65]
 ].map(([n,lvl,s],i)=>({n,lvl,s,c:PAL[(i*3+1)%PAL.length]}));
-const GRN='ABCDEFGH',GRS=[[[0,1],[2,3]],[[0,2],[1,3]],[[0,3],[1,2]]],KON=['Achtelfinale','Viertelfinale','Halbfinale','Finale'];
+const GRN='AB',GRS=[[[0,1],[2,3]],[[0,2],[1,3]],[[0,3],[1,2]]],KON=['Halbfinale','Finale'];
 let wm=null,wmOn=false,wmOpp=null,wmConfirm=false,wmAll=false;
 function saveWM(){try{if(wm)localStorage.setItem('tnWM',JSON.stringify(wm));else localStorage.removeItem('tnWM');}catch(e){}}
-try{const v=JSON.parse(localStorage.getItem('tnWM')||'null');if(v&&Array.isArray(v.groups)&&v.groups.length===8&&Array.isArray(v.t)&&v.t.length===32&&Array.isArray(v.pairs))wm=v;}catch(e){}
+try{const v=JSON.parse(localStorage.getItem('tnWM')||'null');if(v&&Array.isArray(v.groups)&&v.groups.length===2&&Array.isArray(v.t)&&v.t.length===32&&Array.isArray(v.pairs))wm=v;}catch(e){}
 const wmFertig=()=>!wm||wm.phase==='out'||wm.phase==='done';
 const wmName=i=>i===0?'Du':WMT[i-1].n;
 const wmCol=i=>{if(i===0)return homeCol;const c=WMT[i-1].c;return c===homeCol?(homeCol===BLUE?0xd63a2f:BLUE):c;};
@@ -1882,7 +1882,7 @@ const wmMix=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(
 function wmNeu(){
   const topf=l=>wmMix(WMT.map((t,i)=>i+1).filter(i=>WMT[i-1].lvl===l));
   const t1=[0,...topf(3)],t2=topf(2),t3=topf(1),t4=topf(0);
-  wm={groups:[0,1,2,3,4,5,6,7].map(g=>[t1[g],t2[g],t3[g],t4[g]]),t:Array.from({length:32},()=>({p:0,w:0,d:0,l:0,gf:0,ga:0})),
+  wm={groups:[0,1].map(g=>[t1[g],t2[g],t3[g],t4[g]]),t:Array.from({length:32},()=>({p:0,w:0,d:0,l:0,gf:0,ga:0})),
       phase:'g',gr:0,k:0,pairs:[],hist:[],last:null,champ:-1,place:'',pl:0,cur:''};
   saveWM();
 }
@@ -1891,7 +1891,7 @@ function wmSim(a,b){return setSim(wmS(a),wmS(b));}
 function wmKO(a,b){const[ga,gb]=wmSim(a,b);return{a,b,ga,gb,w:ga>gb?a:b,x:''};}
 function wmSort(g){const T=wm.t;return g.slice().sort((a,b)=>{const x=T[a],y=T[b];return y.p-x.p||(y.gf-y.ga)-(x.gf-x.ga)||y.gf-x.gf||a-b;});}
 const wmMeinPaar=()=>wm.pairs.findIndex(p=>p.includes(0));
-function wmRunde(k,idx){return k===3&&idx===1?'Spiel um Platz 3':KON[k];}
+function wmRunde(k){return KON[k];}
 function wmStufe(){
   if(!wm)return '';
   if(wm.phase==='g')return 'Gruppe A · Spieltag '+(wm.gr+1)+' von 3';
@@ -1916,12 +1916,11 @@ function startWMMatch(){
 }
 function wmKoSchritt(res){
   wm.hist.push(res);
-  if(wm.k<2){wm.pairs=[];for(let i=0;i<res.length;i+=2)wm.pairs.push([res[i].w,res[i+1].w]);}
-  else if(wm.k===2){const lo=r=>r.w===r.a?r.b:r.a;wm.pairs=[[res[0].w,res[1].w],[lo(res[0]),lo(res[1])]];}
+  if(wm.k===0)wm.pairs=[[res[0].w,res[1].w]];
   else{wm.pairs=[];wm.champ=res[0].w;}
   wm.k++;
 }
-function wmRest(){while(wm.k<4)wmKoSchritt(wm.pairs.map(([a,b])=>wmKO(a,b)));}
+function wmRest(){while(wm.k<2)wmKoSchritt(wm.pairs.map(([a,b])=>wmKO(a,b)));}
 function wmRec(){
   const mine=(a,b)=>{const ga=a===0?score[0]:score[1],gb=a===0?score[1]:score[0];return[ga,gb];};
   wm.last={stufe:wm.cur,gegner:opp.n,s:score.slice(),h:setHist.slice(),gd:golden,ko:wm.phase==='k',k:wm.k};
@@ -1936,8 +1935,9 @@ function wmRec(){
     }
     wm.gr++;
     if(wm.gr>=3){
-      const st=wm.groups.map(wmSort),P=[[0,1],[2,3],[4,5],[6,7],[1,0],[3,2],[5,4],[7,6]];
-      wm.pairs=P.map(([x,y])=>[st[x][0],st[y][1]]);wm.k=0;
+      /* Halbfinale über Kreuz: Erster A gegen Zweiter B, Erster B gegen Zweiter A */
+      const st=wm.groups.map(wmSort);
+      wm.pairs=[[st[0][0],st[1][1]],[st[1][0],st[0][1]]];wm.k=0;
       if(wm.t[0].w===3)stats.wmgs=(stats.wmgs||0)+1;
       if(wmMeinPaar()<0){wm.phase='out';wm.place='in der Gruppenphase';wmRest();}
       else{wm.phase='k';stats.wmko=(stats.wmko||0)+1;}
@@ -1950,10 +1950,10 @@ function wmRec(){
     });
     const won=res[idx].w===0;
     wmKoSchritt(res);
-    if(k===1&&won)stats.wmhf=(stats.wmhf||0)+1;
-    if(k<2&&!won){wm.phase='out';wm.place='im '+KON[k];wmRest();}
-    else if(k===3){
-      wm.phase='done';wm.pl=idx===0?(won?1:2):(won?3:4);
+    if(k===0&&won)stats.wmhf=(stats.wmhf||0)+1;
+    if(k===0&&!won){wm.phase='out';wm.place='im Halbfinale';wmRest();}
+    else if(k===1){
+      wm.phase='done';wm.pl=won?1:2;
       if(wm.pl===1){stats.wmw=(stats.wmw||0)+1;if(!wm.nl)stats.wmun=(stats.wmun||0)+1;cerStart();}
     }
   }
@@ -1973,7 +1973,7 @@ function wmPaare(liste,k){
     const a=Array.isArray(p)?p[0]:p.a,b=Array.isArray(p)?p[1]:p.b,me=a===0||b===0;
     const er=Array.isArray(p)?'–':`${p.ga} : ${p.gb}${p.x?' <span style="opacity:.75">('+p.x+')</span>':''}`;
     const nm=(t)=>`<span class="dot" style="background:${hex(wmCol(t))}"></span>${Array.isArray(p)||p.w!==t?wmName(t):'<b>'+wmName(t)+'</b>'}`;
-    return `<tr class="${me?'me':''}">${k===3?`<td class="n" style="opacity:.75">${i===0?'Finale':'Platz 3'}</td>`:''}<td class="n">${nm(a)}</td><td class="r">${er}</td><td class="n">${nm(b)}</td></tr>`;
+    return `<tr class="${me?'me':''}"><td class="n">${nm(a)}</td><td class="r">${er}</td><td class="n">${nm(b)}</td></tr>`;
   }).join('')+'</table>';
 }
 function wmHtml(){
@@ -1982,11 +1982,11 @@ function wmHtml(){
   const ul=unlockMsg?'<br>🔓 '+unlockMsg:'';
   const knoepfe=(weiter)=>wmConfirm
     ?'<b style="margin-top:8px">WM wirklich abbrechen? Der Fortschritt geht verloren.</b><div class="lo"><button class="mb sm" data-wmn="1">Abbrechen</button><button class="mb sm" data-wmy="1">Ja, WM beenden</button></div>'
-    :`<div class="lo">${wm.phase==='g'?`<button class="mb sm" data-wmall="1">${wmAll?'Deine Gruppe':'Alle Gruppen'} (G)</button>`:''}<button class="mb sm" data-wmx="1">WM abbrechen</button><button class="mb sm" data-wmnext="1">${weiter} (Enter)</button></div><button class="mb sm cr" data-wmmenu="1">Zurück zum Menü (M)</button>`;
+    :`<div class="lo">${wm.phase==='g'?`<button class="mb sm" data-wmall="1">${wmAll?'Deine Gruppe':'Beide Gruppen'} (G)</button>`:''}<button class="mb sm" data-wmx="1">WM abbrechen</button><button class="mb sm" data-wmnext="1">${weiter} (Enter)</button></div><button class="mb sm cr" data-wmmenu="1">Zurück zum Menü (M)</button>`;
   const gruppe=()=>wmAll?wmAlleGruppen():wmTabelle(0);
   if(endKind==='wpre'){
     if(wm.phase==='g')return tasksHtml()+kopf('WM · '+wmStufe())
-      +(wm.gr===0&&!wmAll?'<div class="mh wi">Du bist Gastgeber und spielst in Gruppe A. Die zwei Besten jeder Gruppe kommen ins Achtelfinale. Gespielt wird auf 2 Gewinnsätze: ein 2:0-Sieg bringt 3 Punkte, ein 2:1-Sieg 2 Punkte und eine 1:2-Niederlage noch 1 Punkt.</div>':'')
+      +(wm.gr===0&&!wmAll?'<div class="mh wi">Du bist Gastgeber und spielst in Gruppe A. Die zwei Besten jeder Gruppe kommen ins Halbfinale, die Sieger spielen das Finale. Gespielt wird auf 2 Gewinnsätze: ein 2:0-Sieg bringt 3 Punkte, ein 2:1-Sieg 2 Punkte und eine 1:2-Niederlage noch 1 Punkt.</div>':'')
       +gruppe()+'Nächstes Match: Du gegen '+wmName(wmGegner())+knoepfe('Nächstes Match');
     return tasksHtml()+kopf('WM · '+wmStufe())+wmPaare(wm.pairs,wm.k)+'Nächstes Match: Du gegen '+wmName(wmGegner())+knoepfe('Nächstes Match');
   }
@@ -1997,13 +1997,13 @@ function wmHtml(){
   if(wm.phase==='g'){info='Nächstes Match: Du gegen '+wmName(wmGegner());weiter='Nächstes Match';}
   else if(wm.phase==='k'){
     const r=wmRunde(wm.k,wmMeinPaar());
-    info=(L.ko?(r==='Spiel um Platz 3'?'Schade! Jetzt geht es ums '+r:'Weiter! Nächste Runde: '+r):'Geschafft! Du stehst im Achtelfinale')+' – gegen '+wmName(wmGegner())+'.';
+    info=(L.ko?'Weiter! Du stehst im '+r:'Geschafft! Du stehst im Halbfinale')+' – gegen '+wmName(wmGegner())+'.';
     weiter=r;
   }else if(wm.phase==='out'){
     return tasksHtml()+kopf(erg+' '+sc)+'gegen '+L.gegner+' · '+L.stufe+ul+ansicht
       +`<b style="margin-top:6px">Ausgeschieden ${wm.place}. Weltmeister wurde ${wmName(wm.champ)}.</b><div class="lo"><button class="mb sm" data-wmnext="1">Zurück zum Menü (Enter)</button></div>`;
   }else{
-    const t=['','🏆 Weltmeister! Du hast den Weltpokal gewonnen!','Vizeweltmeister – knapp am Titel vorbei.','Platz 3 – Bronze!','Platz 4.'][wm.pl];
+    const t=['','🏆 Weltmeister! Du hast den Weltpokal gewonnen!','Vizeweltmeister – knapp am Titel vorbei.'][wm.pl];
     return tasksHtml()+kopf(erg+' '+sc)+'gegen '+L.gegner+' · '+L.stufe+ul+ansicht
       +`<b style="margin-top:6px">${t}${wm.pl>1?' Weltmeister wurde '+wmName(wm.champ)+'.':''}</b><div class="lo"><button class="mb sm" data-wmnext="1">Zurück zum Menü (Enter)</button></div>`;
   }
@@ -2464,9 +2464,49 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state!=='
   },400);
 })();
 let last=performance.now();
+/* ---------- Ballspuren: Feuerspur für den Feuer-Ball, Kristall- und Schneespur für den Eis-Ball ---------- */
+const TRAIL=[];let trT=0,trLast=null;const TRS=0.6; /* Tennisball ist kleiner als der Volleyball */
+const trTex=(()=>{
+  const mkc=f=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');f(g);return new THREE.CanvasTexture(c);};
+  const fire=mkc(g=>{const q=g.createRadialGradient(32,32,0,32,32,30);q.addColorStop(0,'rgba(255,255,220,1)');q.addColorStop(0.3,'rgba(255,200,60,.95)');q.addColorStop(0.65,'rgba(255,90,10,.55)');q.addColorStop(1,'rgba(200,20,0,0)');g.fillStyle=q;g.fillRect(0,0,64,64);});
+  const crys=mkc(g=>{g.translate(32,32);g.lineCap='round';g.shadowColor='#bff0ff';g.shadowBlur=6;
+    const arm=(w,c)=>{g.strokeStyle=c;for(let k=0;k<6;k++){g.rotate(Math.PI/3);g.lineWidth=w;g.beginPath();g.moveTo(0,0);g.lineTo(0,-25);g.moveTo(0,-14);g.lineTo(-8,-21);g.moveTo(0,-14);g.lineTo(8,-21);g.moveTo(0,-6);g.lineTo(-5,-11);g.moveTo(0,-6);g.lineTo(5,-11);g.stroke();}};
+    arm(7,'#2f8fd8');arm(3,'#ffffff');g.fillStyle='#e8fbff';g.beginPath();g.arc(0,0,4,0,7);g.fill();});
+  const snow=mkc(g=>{const q=g.createRadialGradient(32,32,0,32,32,22);q.addColorStop(0,'rgba(255,255,255,1)');q.addColorStop(0.45,'rgba(210,240,255,.9)');q.addColorStop(0.8,'rgba(120,200,255,.4)');q.addColorStop(1,'rgba(120,200,255,0)');g.fillStyle=q;g.fillRect(0,0,64,64);});
+  return{fire,crys,snow};
+})();
+for(let i=0;i<70;i++){const m=new THREE.SpriteMaterial({map:trTex.fire,transparent:true,depthWrite:false});const sp=new THREE.Sprite(m);sp.visible=false;scene.add(sp);TRAIL.push({sp,life:0,max:1,vx:0,vy:0,vz:0,s0:1,k:''});}
+let trI=0;
+function trSpawn(k,p){
+  const t=TRAIL[trI];trI=(trI+1)%TRAIL.length;
+  const r=()=>(Math.random()-0.5);t.k=k;t.sp.visible=true;t.sp.position.set(p.x+r()*0.3,p.y+r()*0.3,p.z+r()*0.3);
+  const m=t.sp.material;m.rotation=Math.random()*6.28;
+  if(k==='fire'){m.map=trTex.fire;m.blending=THREE.AdditiveBlending;t.max=t.life=0.35+Math.random()*0.2;t.s0=(1.6+Math.random()*0.7)*TRS;t.vx=r()*0.8;t.vy=1.2+Math.random()*1.2;t.vz=r()*0.8;}
+  else if(k==='crys'){m.map=trTex.crys;m.blending=THREE.NormalBlending;m.color.setRGB(1,1,1);t.max=t.life=0.7+Math.random()*0.3;t.s0=(1.0+Math.random()*0.5)*TRS;t.vx=r()*0.6;t.vy=r()*0.6;t.vz=r()*0.6;}
+  else{m.map=trTex.snow;m.blending=THREE.NormalBlending;m.color.setRGB(1,1,1);t.max=t.life=1.0+Math.random()*0.5;t.s0=(0.5+Math.random()*0.3)*TRS;t.vx=r()*0.8;t.vy=-0.8-Math.random()*0.8;t.vz=r()*0.8;}
+  m.needsUpdate=true;
+}
+function trailTick(dt){
+  const n=BALLS[outfit.ball].n,kind=n==='Feuer'?'fire':n==='Eis'?'ice':'',p=bm.position;
+  const show=kind&&bm.visible&&!paused&&(state==='play'||state==='ward'||state==='end');
+  if(show){
+    const spd=trLast?Math.hypot(p.x-trLast.x,p.y-trLast.y,p.z-trLast.z)/Math.max(dt,1e-3):0;
+    const rate=state==='ward'?(kind==='fire'?0.05:0.08):spd>2?(kind==='fire'?0.01:0.02):(kind==='fire'?0.08:0.14);
+    trT-=dt;let guard=0;
+    while(trT<=0&&guard++<8){trT+=rate;if(kind==='fire')trSpawn('fire',p);else trSpawn(Math.random()<0.55?'crys':'snow',p);}
+  }else trT=0;
+  trLast=trLast||p.clone();trLast.copy(p);
+  for(const t of TRAIL){if(!t.sp.visible)continue;t.life-=dt;if(t.life<=0){t.sp.visible=false;continue;}
+    const u=t.life/t.max,q=t.sp.position;q.x+=t.vx*dt;q.y+=t.vy*dt;q.z+=t.vz*dt;
+    const m=t.sp.material;
+    if(t.k==='fire'){t.sp.scale.setScalar(t.s0*(0.25+0.75*u));m.opacity=Math.min(1,u*1.6);m.color.setHSL(0.03+0.1*u,1,0.5+0.15*u);}
+    else if(t.k==='crys'){t.sp.scale.setScalar(t.s0*(0.6+0.4*u));m.opacity=Math.min(1,u*2);m.rotation+=dt*2;}
+    else{t.sp.scale.setScalar(t.s0);m.opacity=Math.min(1,u*1.5);}
+  }
+}
 function loop(t){
   const dt=Math.min(0.033,(t-last)/1000);last=t;
-  update(dt);onNet();sync(dt);audioTick();
+  update(dt);onNet();sync(dt);trailTick(dt);audioTick();
   if(cer.on){if(state!=='end')cerReset();else ceremonyUpdate(dt);}
   if(state==='play'&&!paused)pyroUpdate(dt);
   pg.visible=pyro.on&&state!=='menu'&&state!=='ward';
