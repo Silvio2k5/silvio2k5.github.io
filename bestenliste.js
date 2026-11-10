@@ -68,9 +68,11 @@ const BL_SPIELE = {
                   return meinHash;
         }
         // Lädt alle Einträge (mit Tore, Pokale, höchster Sieg, Serie, falls die Datenbank sie liefert). Sortiert wird je Statistik hier im Browser.
+        let vollOk = false;   // Datenbank liefert Tore, Pokale usw. -> Reiter immer zeigen, auch wenn noch niemand eingetragen ist
         async function laden(spiel) {
                   const basis = BL_URL.replace(/\/$/, "") + "/rest/v1/rangliste?spiel=eq." + encodeURIComponent(spiel) + "&order=siege.desc,aktualisiert.asc&limit=1000&select=";
                   let r = await fetch(basis + "name,siege,kennung,tore,pokale,hoechster_sieg,serie", { headers: headers() });
+                  vollOk = r.ok;
                   if (!r.ok) r = await fetch(basis + "name,siege,kennung", { headers: headers() });
                   if (!r.ok) throw new Error("laden " + r.status);
                   return r.json();
@@ -140,7 +142,7 @@ const BL_SPIELE = {
              const render = (liste, fehler, hinweis) => {
                          const name = getName();
                          const alle = liste || [];
-                         const extra = alle.some(e => e && "tore" in e);
+                         const extra = vollOk || alle.some(e => e && "tore" in e);
                          if (!extra) kat = "siege";
                          const tabelle = () => {
                                        const k = KAT.find(x => x.id === kat) || KAT[0];
