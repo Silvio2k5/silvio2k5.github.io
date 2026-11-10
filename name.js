@@ -11,10 +11,11 @@
   // Ein Code enthält den Spielstand aller Spiele. Beim Laden wird ein Spiel nur ersetzt, wenn der Code dessen Spielstand enthält.
   const SY_GRUPPEN = {
     fn: ["fnStats", "fnOutfit", "fnUnl", "fnClaimed", "fnBase", "fnRound", "fnLeague", "fnNum", "fnCol", "fnStatsSync", "fnWM"],
-    bb: ["bbStats", "bbOutfit", "bbUnl", "bbClaimed", "bbBase", "bbRound", "bbLeague", "bbNum", "bbCol", "bbStatsSync", "bbWM", "bbTaskVer"]
+    bb: ["bbStats", "bbOutfit", "bbUnl", "bbClaimed", "bbBase", "bbRound", "bbLeague", "bbNum", "bbCol", "bbStatsSync", "bbWM", "bbTaskVer"],
+    hb: ["hbStats", "hbOutfit", "hbUnl", "hbClaimed", "hbBase", "hbRound", "hbLeague", "hbNum", "hbCol", "hbStatsSync", "hbWM"]
   };
   const SY_GEMEINSAM = ["bl-spieler", "bl-name"];
-  const SY_KEYS = [...SY_GRUPPEN.fn, ...SY_GRUPPEN.bb, ...SY_GEMEINSAM];
+  const SY_KEYS = [...SY_GRUPPEN.fn, ...SY_GRUPPEN.bb, ...SY_GRUPPEN.hb, ...SY_GEMEINSAM];
   function uebernehmen(d) {
     for (const g in SY_GRUPPEN) {
       const ks = SY_GRUPPEN[g];
