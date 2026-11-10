@@ -14,10 +14,11 @@
     bb: ["bbStats", "bbOutfit", "bbUnl", "bbClaimed", "bbBase", "bbRound", "bbLeague", "bbNum", "bbCol", "bbStatsSync", "bbWM", "bbTaskVer"],
     hb: ["hbStats", "hbOutfit", "hbUnl", "hbClaimed", "hbBase", "hbRound", "hbLeague", "hbNum", "hbCol", "hbStatsSync", "hbWM"],
     vb: ["vbStats", "vbOutfit", "vbUnl", "vbClaimed", "vbBase", "vbRound", "vbLeague", "vbNum", "vbCol", "vbStatsSync", "vbWM"],
-    tn: ["tnStats", "tnOutfit", "tnUnl", "tnClaimed", "tnBase", "tnRound", "tnLeague", "tnNum", "tnCol", "tnStatsSync", "tnWM"]
+    tn: ["tnStats", "tnOutfit", "tnUnl", "tnClaimed", "tnBase", "tnRound", "tnLeague", "tnNum", "tnCol", "tnStatsSync", "tnWM"],
+    bd: ["bdStats", "bdOutfit", "bdUnl", "bdClaimed", "bdBase", "bdRound", "bdLeague", "bdNum", "bdCol", "bdStatsSync", "bdWM"]
   };
   const SY_GEMEINSAM = ["bl-spieler", "bl-name"];
-  const SY_KEYS = [...SY_GRUPPEN.fn, ...SY_GRUPPEN.bb, ...SY_GRUPPEN.hb, ...SY_GRUPPEN.vb, ...SY_GRUPPEN.tn, ...SY_GEMEINSAM];
+  const SY_KEYS = [...SY_GRUPPEN.fn, ...SY_GRUPPEN.bb, ...SY_GRUPPEN.hb, ...SY_GRUPPEN.vb, ...SY_GRUPPEN.tn, ...SY_GRUPPEN.bd, ...SY_GEMEINSAM];
   function uebernehmen(d) {
     for (const g in SY_GRUPPEN) {
       const ks = SY_GRUPPEN[g];
