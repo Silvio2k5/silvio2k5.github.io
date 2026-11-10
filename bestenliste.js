@@ -8,7 +8,8 @@ const BL_KEY = "sb_publishable_w4PzkJlkAo5WN2PrFftWvg_iN2b_Rz0";      // der öf
 // Welche Spiele eine Bestenliste haben und wo das Spiel seine Siege speichert:
 const BL_SPIELE = {
         "fussball-3d": { speicher: "fnStats", feld: "wins", titel: "Siege" },
-        "basketball-3d": { speicher: "bbStats", feld: "wins", titel: "Siege", tore: "Punkte" }
+        "basketball-3d": { speicher: "bbStats", feld: "wins", titel: "Siege", tore: "Punkte" },
+        "handball-3d": { speicher: "hbStats", feld: "wins", titel: "Siege" }
 };
 
 // ================================================================
