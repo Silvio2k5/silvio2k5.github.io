@@ -2338,9 +2338,49 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state!=='
   },400);
 })();
 let last=performance.now();
+/* ---------- Ballspuren: Feuerspur für den Feuer-Ball, Kristall- und Schneespur für den Eis-Ball ---------- */
+const TRAIL=[];let trT=0,trLast=null;
+const trTex=(()=>{
+  const mkc=f=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');f(g);return new THREE.CanvasTexture(c);};
+  const fire=mkc(g=>{const q=g.createRadialGradient(32,32,0,32,32,30);q.addColorStop(0,'rgba(255,255,220,1)');q.addColorStop(0.3,'rgba(255,200,60,.95)');q.addColorStop(0.65,'rgba(255,90,10,.55)');q.addColorStop(1,'rgba(200,20,0,0)');g.fillStyle=q;g.fillRect(0,0,64,64);});
+  const crys=mkc(g=>{g.translate(32,32);g.lineCap='round';g.shadowColor='#bff0ff';g.shadowBlur=6;
+    const arm=(w,c)=>{g.strokeStyle=c;for(let k=0;k<6;k++){g.rotate(Math.PI/3);g.lineWidth=w;g.beginPath();g.moveTo(0,0);g.lineTo(0,-25);g.moveTo(0,-14);g.lineTo(-8,-21);g.moveTo(0,-14);g.lineTo(8,-21);g.moveTo(0,-6);g.lineTo(-5,-11);g.moveTo(0,-6);g.lineTo(5,-11);g.stroke();}};
+    arm(7,'#2f8fd8');arm(3,'#ffffff');g.fillStyle='#e8fbff';g.beginPath();g.arc(0,0,4,0,7);g.fill();});
+  const snow=mkc(g=>{const q=g.createRadialGradient(32,32,0,32,32,22);q.addColorStop(0,'rgba(255,255,255,1)');q.addColorStop(0.45,'rgba(210,240,255,.9)');q.addColorStop(0.8,'rgba(120,200,255,.4)');q.addColorStop(1,'rgba(120,200,255,0)');g.fillStyle=q;g.fillRect(0,0,64,64);});
+  return{fire,crys,snow};
+})();
+for(let i=0;i<70;i++){const m=new THREE.SpriteMaterial({map:trTex.fire,transparent:true,depthWrite:false});const sp=new THREE.Sprite(m);sp.visible=false;scene.add(sp);TRAIL.push({sp,life:0,max:1,vx:0,vy:0,vz:0,s0:1,k:''});}
+let trI=0;
+function trSpawn(k,p){
+  const t=TRAIL[trI];trI=(trI+1)%TRAIL.length;
+  const r=()=>(Math.random()-0.5);t.k=k;t.sp.visible=true;t.sp.position.set(p.x+r()*0.5,p.y+r()*0.5,p.z+r()*0.5);
+  const m=t.sp.material;m.rotation=Math.random()*6.28;
+  if(k==='fire'){m.map=trTex.fire;m.blending=THREE.AdditiveBlending;t.max=t.life=0.35+Math.random()*0.2;t.s0=1.6+Math.random()*0.7;t.vx=r()*0.8;t.vy=1.2+Math.random()*1.2;t.vz=r()*0.8;}
+  else if(k==='crys'){m.map=trTex.crys;m.blending=THREE.NormalBlending;m.color.setRGB(1,1,1);t.max=t.life=0.7+Math.random()*0.3;t.s0=1.0+Math.random()*0.5;t.vx=r()*0.6;t.vy=r()*0.6;t.vz=r()*0.6;}
+  else{m.map=trTex.snow;m.blending=THREE.NormalBlending;m.color.setRGB(1,1,1);t.max=t.life=1.0+Math.random()*0.5;t.s0=0.5+Math.random()*0.3;t.vx=r()*0.8;t.vy=-0.8-Math.random()*0.8;t.vz=r()*0.8;}
+  m.needsUpdate=true;
+}
+function trailTick(dt){
+  const n=BALLS[outfit.ball].n,kind=n==='Feuer'?'fire':n==='Eis'?'ice':'',p=bm.position;
+  const show=kind&&bm.visible&&!paused&&(state==='play'||state==='ward'||state==='end');
+  if(show){
+    const spd=trLast?Math.hypot(p.x-trLast.x,p.y-trLast.y,p.z-trLast.z)/Math.max(dt,1e-3):0;
+    const rate=state==='ward'?(kind==='fire'?0.05:0.08):spd>2?(kind==='fire'?0.01:0.02):(kind==='fire'?0.08:0.14);
+    trT-=dt;let guard=0;
+    while(trT<=0&&guard++<8){trT+=rate;if(kind==='fire')trSpawn('fire',p);else trSpawn(Math.random()<0.55?'crys':'snow',p);}
+  }else trT=0;
+  trLast=trLast||p.clone();trLast.copy(p);
+  for(const t of TRAIL){if(!t.sp.visible)continue;t.life-=dt;if(t.life<=0){t.sp.visible=false;continue;}
+    const u=t.life/t.max,q=t.sp.position;q.x+=t.vx*dt;q.y+=t.vy*dt;q.z+=t.vz*dt;
+    const m=t.sp.material;
+    if(t.k==='fire'){t.sp.scale.setScalar(t.s0*(0.25+0.75*u));m.opacity=Math.min(1,u*1.6);m.color.setHSL(0.03+0.1*u,1,0.5+0.15*u);}
+    else if(t.k==='crys'){t.sp.scale.setScalar(t.s0*(0.6+0.4*u));m.opacity=Math.min(1,u*2);m.rotation+=dt*2;}
+    else{t.sp.scale.setScalar(t.s0);m.opacity=Math.min(1,u*1.5);}
+  }
+}
 function loop(t){
   const dt=Math.min(0.033,(t-last)/1000);last=t;
-  update(dt);onNet();sync(dt);audioTick();
+  update(dt);onNet();sync(dt);trailTick(dt);audioTick();
   if(cer.on){if(state!=='end')cerReset();else ceremonyUpdate(dt);}
   if(state==='play'&&!paused)pyroUpdate(dt);
   pg.visible=pyro.on&&state!=='menu'&&state!=='ward';
