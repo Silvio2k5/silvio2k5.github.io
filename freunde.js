@@ -7,7 +7,7 @@
 (function () {
   const URL_ = "https://hibfzyxbmbspfhpughim.supabase.co";
   const KEY = "sb_publishable_w4PzkJlkAo5WN2PrFftWvg_iN2b_Rz0";
-  const ONLINE = ["fussball-3d", "basketball-3d"];          // Spiele mit Online 1 gegen 1
+  const ONLINE = ["fussball-3d", "basketball-3d", "handball-3d"];          // Spiele mit Online 1 gegen 1
   const H = { apikey: KEY, "Content-Type": "application/json" };
 
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
