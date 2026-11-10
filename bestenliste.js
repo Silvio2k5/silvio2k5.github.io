@@ -11,7 +11,7 @@ const BL_SPIELE = {
         "basketball-3d": { speicher: "bbStats", feld: "wins", titel: "Siege", tore: "Punkte" },
         "handball-3d": { speicher: "hbStats", feld: "wins", titel: "Siege" },
         "volleyball-3d": { speicher: "vbStats", feld: "wins", titel: "Siege", tore: "Punkte" },
-        "tennis-3d": { speicher: "tnStats", feld: "wins", titel: "Siege", tore: "Punkte" }
+        "tennis-3d": { speicher: "tnStats", feld: "wins", titel: "Siege", tore: "Punkte", ohne: ["sieg"] }      // ohne = Ranglisten, die bei diesem Spiel nicht angezeigt werden
 };
 
 // ================================================================
@@ -145,7 +145,8 @@ const BL_SPIELE = {
                          const name = getName();
                          const alle = liste || [];
                          const extra = vollOk || alle.some(e => e && "tore" in e);
-                         if (!extra) kat = "siege";
+                         const kats = KAT.filter(k => !((cfg && cfg.ohne) || []).includes(k.id));
+                         if (!extra || !kats.some(k => k.id === kat)) kat = "siege";
                          const tabelle = () => {
                                        const k = KAT.find(x => x.id === kat) || KAT[0];
                                        const rows = rangliste(alle, kat).map((e, i) => {
@@ -155,7 +156,7 @@ const BL_SPIELE = {
                                        }).join("");
                                        return rows ? `<table>${rows}</table>` : `<div class="leer">${alle.length ? "Hier hat noch niemand einen Eintrag." : "Noch keine Einträge – sei der Erste!"}</div>`;
                          };
-                         const tabs = extra ? `<div class="bltabs" role="tablist">${KAT.map(k => `<button type="button" role="tab" data-blk="${k.id}" class="${k.id === kat ? "on" : ""}" aria-selected="${k.id === kat}">${k.t}</button>`).join("")}</div>` : "";
+                         const tabs = extra ? `<div class="bltabs" role="tablist">${kats.map(k => `<button type="button" role="tab" data-blk="${k.id}" class="${k.id === kat ? "on" : ""}" aria-selected="${k.id === kat}">${k.t}</button>`).join("")}</div>` : "";
                          box.innerHTML = `
                                  ${fehler ? `<div class="err">Die Bestenliste konnte gerade nicht geladen werden. Versuch es später noch einmal.</div>` :
                                              `${tabs}<div id="blListe">${tabelle()}</div>${extra && kat === "pokale" ? `<div class="info">Pokale = gewonnene Turniere, Ligen und Weltmeisterschaften</div>` : ""}`}
