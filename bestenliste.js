@@ -10,7 +10,7 @@ const BL_SPIELE = {
         "fussball-3d": { speicher: "fnStats", feld: "wins", titel: "Siege" },
         "basketball-3d": { speicher: "bbStats", feld: "wins", titel: "Siege", tore: "Punkte" },
         "handball-3d": { speicher: "hbStats", feld: "wins", titel: "Siege" },
-        "volleyball-3d": { speicher: "vbStats", feld: "wins", titel: "Siege", tore: "Punkte" },
+        "volleyball-3d": { speicher: "vbStats", feld: "wins", titel: "Siege", tore: "Punkte", ohne: ["sieg"] },
         "tennis-3d": { speicher: "tnStats", feld: "wins", titel: "Siege", tore: "Punkte", ohne: ["sieg"] },
         "badminton-3d": { speicher: "bdStats", feld: "wins", titel: "Siege", tore: "Punkte", ohne: ["sieg"] }      // ohne = Ranglisten, die bei diesem Spiel nicht angezeigt werden
 };
