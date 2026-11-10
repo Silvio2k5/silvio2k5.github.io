@@ -10,7 +10,8 @@ const BL_SPIELE = {
         "fussball-3d": { speicher: "fnStats", feld: "wins", titel: "Siege" },
         "basketball-3d": { speicher: "bbStats", feld: "wins", titel: "Siege", tore: "Punkte" },
         "handball-3d": { speicher: "hbStats", feld: "wins", titel: "Siege" },
-        "volleyball-3d": { speicher: "vbStats", feld: "wins", titel: "Siege", tore: "Punkte" }
+        "volleyball-3d": { speicher: "vbStats", feld: "wins", titel: "Siege", tore: "Punkte" },
+        "tennis-3d": { speicher: "tnStats", feld: "wins", titel: "Siege", tore: "Punkte" }
 };
 
 // ================================================================
@@ -81,7 +82,7 @@ const BL_SPIELE = {
 
    // ---------- Ranglisten je Statistik ----------
    const sieg = t => { const m = /^\s*(\d+)\s*:\s*(\d+)/.exec(t || ""); return m ? [+m[1] - +m[2], +m[1]] : [-1, -1]; };
-   // Basketball und Volleyball zählen Punkte statt Tore
+   // Basketball, Volleyball und Tennis zählen Punkte statt Tore
    const punkte = () => ((BL_SPIELE[offen] || {}).tore === "Punkte");
    const KAT = [
              { id: "siege", t: "Siege", wert: e => Number(e.siege) || 0, text: v => v + (v === 1 ? " Sieg" : " Siege") },
