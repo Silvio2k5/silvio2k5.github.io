@@ -1987,10 +1987,10 @@ const LBK=[
   {id:'sieg',t:'Höchster Sieg',w:e=>lbSieg(e.hoechster_sieg),x:(v,e)=>e.hoechster_sieg?escH(e.hoechster_sieg):'–'},
   {id:'serie',t:'Siegesserie',w:e=>Number(e.serie)||0,x:v=>v+(v===1?' Sieg':' Siege')+' in Folge'}
 ];
-let lbKat='siege',lbAlle=[],lbMe='';
+let lbKat='siege',lbAlle=[],lbMe='',lbVoll=false;
 function lbRender(){
   const box=$s('lbBox');if(!box)return;
-  const extra=lbAlle.some(e=>e&&'tore' in e);if(!extra)lbKat='siege';
+  const extra=lbVoll||lbAlle.some(e=>e&&'tore' in e);if(!extra)lbKat='siege';
   const k=LBK.find(q=>q.id===lbKat)||LBK[0];
   const vgl=(a,b)=>{const x=k.w(a),y=k.w(b);return Array.isArray(x)?(y[0]-x[0]||y[1]-x[1]):y-x;};
   const top=lbAlle.filter(e=>{const v=k.w(e);return k.id==='siege'||(Array.isArray(v)?v[0]>=0:v>0);})
@@ -2009,6 +2009,7 @@ async function lbLoad(){
   try{
     const basis=SY_URL+'/rest/v1/rangliste?spiel=eq.'+LB_SPIEL+'&order=siege.desc,aktualisiert.asc&limit=1000&select=';
     let r=await fetch(basis+'name,siege,kennung,tore,pokale,hoechster_sieg,serie',{headers:{apikey:SY_KEY}});
+    lbVoll=r.ok;
     if(!r.ok)r=await fetch(basis+'name,siege,kennung',{headers:{apikey:SY_KEY}});
     if(!r.ok)throw 0;
     lbAlle=await r.json();lbMe=await lbHash();
