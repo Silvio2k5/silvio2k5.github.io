@@ -42,7 +42,7 @@
   });
 
   // Abzeichen für Spiele mit Online-Multiplayer und Crossplay (PC & Handy)
-  const ONLINE_SPIELE = ['fussball-3d', 'basketball-3d', 'handball-3d', 'volleyball-3d', 'tennis-3d'];
+  const ONLINE_SPIELE = ['fussball-3d', 'basketball-3d', 'handball-3d', 'volleyball-3d', 'tennis-3d', 'badminton-3d'];
   const badgeCss = document.createElement('style');
   badgeCss.textContent = '.xbadge{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#7fe0a0;border:1px solid rgba(127,224,160,.45);border-radius:99px;padding:2px 9px;white-space:nowrap}';
   head.appendChild(badgeCss);
