@@ -136,7 +136,10 @@ input[type=text]{font-family:'VT323',monospace;font-size:22px;background:#f4efe1
   #toasts{top:calc(160px + env(safe-area-inset-top))}
 }
 #say{position:fixed;left:0;top:0;z-index:27;display:none;width:min(340px,86vw);background:#fffdf5;color:#1c1c1c;border:3px solid #0c0e16;border-radius:10px;padding:9px 12px 10px;box-shadow:0 4px 0 rgba(0,0,0,.35);font-size:22px;line-height:1.08;cursor:pointer}
-#say .sn{font-family:'Press Start 2P',monospace;font-size:9px;color:#2e86de;margin-bottom:6px}
+#say .sskip{position:absolute;top:4px;right:6px;font-family:'Press Start 2P',monospace;font-size:10px;line-height:1;padding:5px 7px;background:#ffd77a;color:#0c0e16;border:2px solid #0c0e16;border-radius:4px;cursor:pointer;box-shadow:0 2px 0 #0c0e16}
+#say .sskip:active{transform:translateY(2px);box-shadow:none}
+#say.done .sskip{display:none}
+#say .sn{padding-right:40px;font-family:'Press Start 2P',monospace;font-size:9px;color:#2e86de;margin-bottom:6px}
 #say .st{min-height:24px}
 #say.ring{animation:wig .22s infinite}
 @keyframes wig{0%,100%{transform:rotate(0)}25%{transform:rotate(-1.6deg)}75%{transform:rotate(1.6deg)}}
@@ -202,7 +205,7 @@ input[type=text]{font-family:'VT323',monospace;font-size:22px;background:#f4efe1
   </div>
   <div class="phint">Tippe auf eine Anzeige</div>
 </div></div>
-<div id="say"><div class="sn"></div><div class="st"></div><div class="sb"></div><div class="tail"></div></div>
+<div id="say"><button class="sskip" type="button" aria-label="Text sofort anzeigen">⏩</button><div class="sn"></div><div class="st"></div><div class="sb"></div><div class="tail"></div></div>
 <div id="mail">✉️</div>
 <div id="intro"><div class="box panel">
   <div id="vMain">
@@ -699,10 +702,11 @@ function carBox(c){const L=LANES[c.l];if(L.a==='x')return [c.pos-.75,L.p+.5-.42,
 const ovl=(a,b)=>a[0]<b[2]&&a[2]>b[0]&&a[1]<b[3]&&a[3]>b[1];
 const pBox=(x,y)=>[x-.28,y-.36,x+.28,y-.02];
 
+function mgrShown(){return S.invited&&(!S.owned||(S.mgrLeaving&&!S.mgrGone))&&(shopHours()||insideB===shopIdx||S.mgrLeaving);}
 function shopHours(){const h=S.time/60;return h>=9&&h<18;}
 function canEnter(b){if(b.id==='toy')return !!S.toyOwned;return b.enter&&(b.id!=='shop'||S.owned||(S.invited&&shopHours()));}
 function pBlocked(tx,ty){if(!inb(tx,ty))return true;const i=I(tx,ty);if(solid[i])return true;if(ground[i]===DOOR&&!canEnter(B[bmap[i]]))return true;return false;}
-function boxFree(x,y){const bx=pBox(x,y);for(let ty=Math.floor(bx[1]);ty<=Math.floor(bx[3]);ty++)for(let tx=Math.floor(bx[0]);tx<=Math.floor(bx[2]);tx++)if(pBlocked(tx,ty))return false;const cur=pBox(player.x,player.y);if(S.invited&&Math.hypot(x-mgr.x,y-mgr.y)<.5&&Math.hypot(player.x-mgr.x,player.y-mgr.y)>=.5)return false;for(const c of cars){const cb=carBox(c);if(ovl(bx,cb)&&!ovl(cur,cb))return false;}return true;}
+function boxFree(x,y){const bx=pBox(x,y);for(let ty=Math.floor(bx[1]);ty<=Math.floor(bx[3]);ty++)for(let tx=Math.floor(bx[0]);tx<=Math.floor(bx[2]);tx++)if(pBlocked(tx,ty))return false;const cur=pBox(player.x,player.y);if(mgrShown()&&Math.hypot(x-mgr.x,y-mgr.y)<.5&&Math.hypot(player.x-mgr.x,player.y-mgr.y)>=.5)return false;for(const c of cars){const cb=carBox(c);if(ovl(bx,cb)&&!ovl(cur,cb))return false;}return true;}
 
 // Wegfindung (A*)
 function passN(x,y,allow){if(!inb(x,y))return false;const i=I(x,y);if(ground[i]===FOREST)return false;const b=bmap[i];if(b>=0&&allow.indexOf(b)<0)return false;if(solid[i]&&ground[i]!==DOOR)return false;return true;}
@@ -902,7 +906,7 @@ function dlgSlot(i){
     let h=`<div class="info">${f.n} · ${CATN[sl.type]} · belegt: <b>${sum}/${f.cap}</b></div>`;
     PIDS.filter(id=>P[id].cat===sl.type).forEach(id=>{const inR=sl.stock[id]||0,inK=S.inv[id]||0;h+=`<div class="row"><div class="l">${imgI(id)}<div>${P[id].n}<div class="sub">Im Regal: ${inR} · In der Kiste: ${inK} · VK ${eur(P[id].sell)}</div></div></div><button class="btn" data-act="fill" data-arg="${id}" ${(!inK||sum>=f.cap)?'disabled':''}>EINRÄUMEN</button></div>`;});
     const any=PIDS.some(id=>P[id].cat===sl.type&&S.inv[id]);
-    h+=`<div class="btns"><button class="btn green" data-act="fillAll" ${(!any||sum>=f.cap)?'disabled':''}>ALLES EINRÄUMEN</button>${S.owned?`<button class="btn red" data-act="remove">ABBAUEN (+${eur(f.cost/2)})</button>`:''}</div>`;
+    h+=`<div class="btns"><button class="btn green" data-act="fillAll" ${(!any||sum>=f.cap)?'disabled':''}>ALLES EINRÄUMEN</button></div>`;
     if(!any)h+=`<p class="sub">Du hast keine passende Ware in deiner Kiste. Kauf ${CATN[sl.type]} im Großhandel.</p>`;
     return h;
   };
@@ -1505,17 +1509,17 @@ let wakeT=0,storyOpen=false,paperOpen=false,sayBtns=[],sayFull='',sayPos=0,sayTi
 function needStory(){return !S.introDone&&!S.owned&&!S.served;}
 function say(text,buttons,who,cls){
   storyOpen=true;const b=$('say'),sn=b.querySelector('.sn');sn.textContent=who?who.n:playerName();sn.style.color=who?who.c:'#2e86de';b.classList.toggle('ring',cls==='ring');
-  sayFull=text;sayPos=0;const st=b.querySelector('.st');st.textContent='';sayBtns=buttons||[];
+  b.classList.remove('done');sayFull=text;sayPos=0;const st=b.querySelector('.st');st.textContent='';sayBtns=buttons||[];
   const sb=b.querySelector('.sb');sb.innerHTML='';sb.style.visibility='hidden';
   sayBtns.forEach((o,i)=>{const e=document.createElement('button');e.className='btn '+(o.cls||'green');e.textContent=o.t;e.onclick=ev=>{ev.stopPropagation();blip();o.f();};sb.appendChild(e);});
   b.style.display='block';clearInterval(sayTimer);
-  sayTimer=setInterval(()=>{sayPos++;st.textContent=sayFull.slice(0,sayPos);if(sayPos%3===0)beep(520+R2()*120,.03,'square',.015);if(sayPos>=sayFull.length){clearInterval(sayTimer);sb.style.visibility='visible';}},28);
+  sayTimer=setInterval(()=>{sayPos++;st.textContent=sayFull.slice(0,sayPos);if(sayPos%3===0)beep(520+R2()*120,.03,'square',.015);if(sayPos>=sayFull.length){clearInterval(sayTimer);sb.style.visibility='visible';b.classList.add('done');}},28);
 }
 function sayDone(){return sayPos>=sayFull.length;}
-function sayFinish(){clearInterval(sayTimer);sayPos=sayFull.length;$('say').querySelector('.st').textContent=sayFull;$('say').querySelector('.sb').style.visibility='visible';}
+function sayFinish(){clearInterval(sayTimer);$('say').classList.add('done');sayPos=sayFull.length;$('say').querySelector('.st').textContent=sayFull;$('say').querySelector('.sb').style.visibility='visible';}
 function sayKey(){if($('say').style.display==='none')return;if(!sayDone()){sayFinish();return;}if(sayBtns[0]){blip();sayBtns[0].f();}}
 function sayHide(){clearInterval(sayTimer);$('say').style.display='none';}
-$('say').addEventListener('click',e=>{if(e.target.tagName!=='BUTTON'&&!sayDone())sayFinish();});
+$('say').addEventListener('click',e=>{if(e.target.classList.contains('sskip')){e.stopPropagation();sayFinish();return;}if(e.target.tagName!=='BUTTON'&&!sayDone())sayFinish();});
 function placeSay(px,py){
   const b=$('say'),tail=b.querySelector('.tail');if(b.style.display==='none')return;
   const w=b.offsetWidth,h=b.offsetHeight;
