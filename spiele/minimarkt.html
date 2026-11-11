@@ -15,12 +15,15 @@ html,body{margin:0;height:100%;overflow:hidden;background:#151821;font-family:'V
 #hRep{color:#ffcf3f;letter-spacing:1px}
 #hShop{font-size:18px;color:#a9b4d8}
 #goal{position:fixed;left:50%;transform:translateX(-50%);top:calc(8px + env(safe-area-inset-top));padding:6px 12px;font-size:20px;max-width:min(520px,52vw);z-index:5;pointer-events:none;line-height:1.05}
+@media (max-width:1700px){body:not(.mob) #goal{top:calc(58px + env(safe-area-inset-top))}}
 #goalT{white-space:pre-line}
 #goal .gl{font-family:'Press Start 2P',monospace;font-size:9px;color:#7ee081;display:block;margin-bottom:3px}
-#volWrap{display:flex;align-items:center;background:#2a2f45;border:2px solid #0c0e16;border-radius:4px;padding:0 8px;box-shadow:0 3px 0 #0c0e16}
-#volR{-webkit-appearance:none;appearance:none;width:90px;height:6px;background:#4a5070;border-radius:3px;outline:none;cursor:pointer;accent-color:#ffd77a}
-#volR::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:#ffd77a;border:2px solid #0c0e16;border-radius:2px;cursor:pointer}
-#volR::-moz-range-thumb{width:12px;height:12px;background:#ffd77a;border:2px solid #0c0e16;border-radius:2px;cursor:pointer}
+#volWrap{display:flex;flex-direction:column;justify-content:center;gap:3px;background:#2a2f45;border:2px solid #0c0e16;border-radius:4px;padding:0 8px;box-shadow:0 3px 0 #0c0e16}
+.mvol{display:flex;flex-wrap:wrap;gap:8px 22px;margin:2px 0 10px}.mvol label{display:flex;align-items:center;gap:8px}.mvol .vr{width:130px;height:8px}
+#volWrap .vrow{display:flex;align-items:center;gap:5px;font-size:11px;line-height:1;height:14px}
+.vr{-webkit-appearance:none;appearance:none;width:84px;height:6px;background:#4a5070;border-radius:3px;outline:none;cursor:pointer;accent-color:#ffd77a}
+.vr::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:#ffd77a;border:2px solid #0c0e16;border-radius:2px;cursor:pointer}
+.vr::-moz-range-thumb{width:12px;height:12px;background:#ffd77a;border:2px solid #0c0e16;border-radius:2px;cursor:pointer}
 .gtree{position:relative;margin:4px 0 10px;padding-left:6px}
 .gch{font-family:'Press Start 2P',monospace;font-size:10px;color:#ffd77a;margin:14px 0 6px}
 .gn{display:flex;gap:10px;align-items:flex-start;position:relative;padding:3px 0 7px 0;line-height:1.05}
@@ -176,7 +179,7 @@ input[type=text]{font-family:'VT323',monospace;font-size:22px;background:#f4efe1
 <canvas id="c"></canvas>
 <div id="hud" class="panel"><button class="ptg" data-col="hud" aria-label="Ein-/ausklappen">–</button><div id="hMoney"></div><div id="hTime"></div><div id="hRep"></div><div id="hShop"></div></div>
 <div id="goal" class="panel"><button class="ptg" data-col="goal" aria-label="Ein-/ausklappen">–</button><span class="gl">ZIEL</span><span id="goalT"></span></div>
-<div id="topBtns"><button class="btn sm" id="bMusic" title="Hintergrundmusik an/aus">🎵</button><div id="volWrap" title="Lautstärke der Musik"><input type="range" id="volR" min="0" max="100" step="1" value="60"></div><button class="btn sm" id="bFast" title="Doppelte Geschwindigkeit">⏩ 2×</button><button class="btn sm" id="bInv">📦 0/36</button><button class="btn sm" id="bGoals" title="Alle Aufgaben (Z)">📋 Ziele</button><button class="btn sm" id="bMap">🗺️ Karte</button><button class="btn sm" id="bMenu">☰</button></div>
+<div id="topBtns"><button class="btn sm" id="bMusic" title="Hintergrundmusik an/aus">🎵</button><div id="volWrap"><div class="vrow" title="Lautstärke der Musik"><span>🎵</span><input type="range" class="vr" id="volR" data-v="music" min="0" max="100" step="1" value="60"></div><div class="vrow" title="Lautstärke der Geräusche"><span>🔊</span><input type="range" class="vr" id="sfxR" data-v="sfx" min="0" max="100" step="1" value="80"></div></div><button class="btn sm" id="bFast" title="Doppelte Geschwindigkeit">⏩ 2×</button><button class="btn sm" id="bInv">📦 0/36</button><button class="btn sm" id="bGoals" title="Alle Aufgaben (Z)">📋 Ziele</button><button class="btn sm" id="bMap">🗺️ Karte</button><button class="btn sm" id="bMenu">☰</button></div>
 <div id="prompt" class="panel"></div>
 <div id="toasts"></div>
 <div id="shoplist" class="panel"></div>
@@ -1042,6 +1045,7 @@ function sleep(home){
 function dlgMenu(){
   showDialog('Menü',`
    <div class="info">Tag ${S.day} · Umsatz gesamt: <b>${eur(S.revenue)}</b><br>Kunden bedient: <b>${S.served}</b> · Ruf: <b>${Math.round(S.rep)}/100</b>${S.owned?`<br>Laden: <b>${esc(S.shopName)}</b> (${S.open?'geöffnet':'geschlossen'})`:''}</div>
+   <p style="color:#7ee081">Lautstärke</p><div class="mvol"><label>🎵 Musik <input type="range" class="vr" data-v="music" min="0" max="100" step="1" value="${S.musicVol??60}"></label><label>🔊 Geräusche <input type="range" class="vr" data-v="sfx" min="0" max="100" step="1" value="${S.sfxVol??80}"></label></div>
    <p style="color:#7ee081">Steuerung</p><p class="sub">${ctlHTML()}</p>
    <p style="color:#7ee081">So läuft's</p><p class="sub">Kauf den leeren Laden, stell Regale auf, hol Ware im Großhandel, räum sie ein und öffne den Laden. Kunden suchen sich Ware aus und warten an der Kasse – stell dich dahinter und kassiere. Abends kannst du zu Hause schlafen.</p>
    <div class="btns"><button class="btn green" data-act="save">SPEICHERN</button><button class="btn" data-act="lb">🏆 BESTENLISTE</button><button class="btn" data-act="mute">TON ${S.muted?'AN':'AUS'}</button><button class="btn" data-act="start">STARTMENÜ</button><button class="btn red" data-act="reset">NEUES SPIEL</button></div><p class="sub" style="margin-top:10px">${cloudInfo()}</p><div class="btns" style="margin-top:8px"><button class="btn gray" data-act="leave">🚪 SPIEL VERLASSEN</button></div>`,
@@ -1173,7 +1177,7 @@ const RAIN={on:false,g:null,src:null};
 function rainSound(){
   const want=!!AC&&!S.muted&&S.weather==='rain'&&started;
   if(want&&!RAIN.on){try{const len=AC.sampleRate*2,bf=AC.createBuffer(1,len,AC.sampleRate),d=bf.getChannelData(0);let l=0;for(let i=0;i<len;i++){l=l*.6+(Math.random()*2-1)*.4;d[i]=l;}
-      const src=AC.createBufferSource(),lp=AC.createBiquadFilter(),g=AC.createGain();src.buffer=bf;src.loop=true;lp.type='lowpass';lp.frequency.value=1400;g.gain.value=0;src.connect(lp);lp.connect(g);g.connect(AC.destination);src.start();
+      const src=AC.createBufferSource(),lp=AC.createBiquadFilter(),g=AC.createGain();src.buffer=bf;src.loop=true;lp.type='lowpass';lp.frequency.value=1400;g.gain.value=0;src.connect(lp);lp.connect(g);g.connect(sfxOut());src.start();
       RAIN.on=true;RAIN.g=g;RAIN.src=src;}catch(e){}}
   else if(!want&&RAIN.on){RAIN.on=false;const g=RAIN.g,src=RAIN.src;try{g.gain.setTargetAtTime(0,AC.currentTime,.3);setTimeout(()=>{try{src.stop();}catch(e){}},1500);}catch(e){}}
   if(RAIN.on){const v=(insideB>=0?.05:.11);if(Math.abs(RAIN.g.gain.value-v)>.005)RAIN.g.gain.setTargetAtTime(v,AC.currentTime,.4);}
@@ -1220,8 +1224,10 @@ function musicTick(){
   }
 }
 function musicToggle(){audioInit();S.music=S.music===false;if(musicWanted())musicStart();else musicStop();musicBtn();save();toast(S.music!==false?'Musik an':'Musik aus');}
-function musicBtn(){const vr=$('volR');if(vr){vr.value=S.musicVol??60;$('volWrap').style.opacity=(S.music===false||S.muted)?.45:1;}const b=$('bMusic');if(b){b.textContent=S.music===false?'🔇':'🎵';b.classList.toggle('on',S.music!==false&&!S.muted);}}
-function beep(f,d,type,v,when){if(!AC||S.muted)return;try{const a=AC,o=a.createOscillator(),g=a.createGain(),t0=a.currentTime+(when||0);o.type=type||'square';o.frequency.value=f;g.gain.setValueAtTime(v||.04,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+d);o.connect(g);g.connect(a.destination);o.start(t0);o.stop(t0+d+.03);}catch(e){}}
+function musicBtn(){const sr=$('sfxR');if(sr)sr.value=S.sfxVol??80;const vr=$('volR');if(vr){vr.value=S.musicVol??60;$('volWrap').style.opacity=(S.music===false||S.muted)?.45:1;}const b=$('bMusic');if(b){b.textContent=S.music===false?'🔇':'🎵';b.classList.toggle('on',S.music!==false&&!S.muted);}}
+function sfxVol(){return (S.sfxVol??80)/80;}
+let SFX=null;function sfxOut(){if(!SFX){SFX=AC.createGain();SFX.connect(AC.destination);}SFX.gain.value=sfxVol();return SFX;}
+function beep(f,d,type,v,when){if(!AC||S.muted||(S.sfxVol??80)<=0)return;try{const a=AC,o=a.createOscillator(),g=a.createGain(),t0=a.currentTime+(when||0);o.type=type||'square';o.frequency.value=f;g.gain.setValueAtTime(v||.04,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+d);o.connect(g);g.connect(sfxOut());o.start(t0);o.stop(t0+d+.03);}catch(e){}}
 const blip=()=>beep(660,.05,'square',.03);
 const kaching=()=>{beep(1320,.07,'square',.045);beep(1760,.28,'square',.045,.07);};
 
@@ -1251,9 +1257,12 @@ $('prompt').addEventListener('click',()=>doInteract());
 $('bInv').onclick=()=>{audioInit();if(!dlgOpen)dlgInv();};
 $('bMusic').onclick=musicToggle;
 $('bGoals').onclick=()=>{audioInit();if(!dlgOpen&&!storyOpen&&!introOpen()){if(mapOpen)toggleMap();dlgGoals();}};
-{const vr=$('volR');['keydown','keyup'].forEach(ev=>vr.addEventListener(ev,e=>e.stopPropagation()));
- vr.addEventListener('input',()=>{S.musicVol=+vr.value;audioInit();if(MUS.g&&AC){MUS.g.gain.cancelScheduledValues(AC.currentTime);MUS.g.gain.setTargetAtTime(musVol(),AC.currentTime,.05);}});
- vr.addEventListener('change',()=>{vr.blur();save();});}
+function volSet(kind,v){if(kind==='music'){S.musicVol=v;audioInit();if(MUS.g&&AC){MUS.g.gain.cancelScheduledValues(AC.currentTime);MUS.g.gain.setTargetAtTime(musVol(),AC.currentTime,.05);}}
+  else{S.sfxVol=v;audioInit();if(SFX&&AC)SFX.gain.setTargetAtTime(sfxVol(),AC.currentTime,.03);}
+  document.querySelectorAll('input.vr[data-v="'+kind+'"]').forEach(e=>{if(+e.value!==v)e.value=v;});}
+document.addEventListener('input',e=>{const t=e.target;if(t.classList&&t.classList.contains('vr'))volSet(t.dataset.v,+t.value);});
+document.addEventListener('change',e=>{const t=e.target;if(t.classList&&t.classList.contains('vr')){if(t.dataset.v==='sfx')blip();t.blur();save();}});
+['keydown','keyup'].forEach(ev=>document.addEventListener(ev,e=>{if(e.target.classList&&e.target.classList.contains('vr'))e.stopPropagation();},false));
 $('bFast').onclick=()=>{audioInit();S.fast=!S.fast;$('bFast').classList.toggle('on',!!S.fast);blip();toast(S.fast?'Doppelte Geschwindigkeit an':'Normale Geschwindigkeit');save();};
 $('bMap').onclick=()=>{audioInit();if(!dlgOpen)toggleMap();};
 $('bMenu').onclick=()=>{audioInit();if(!dlgOpen)dlgMenu();};
