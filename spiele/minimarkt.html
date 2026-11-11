@@ -1745,7 +1745,7 @@ function updateEmp(dt){
   if(!atReg)empGo(30,22,[shopIdx]);else emp.dir='right';
 }
 function empBuy(){
-  let cap=INV_CAP;
+  let cap=INV_CAP*2; // Aushilfe trägt dank Kiste doppelt so viel
   const ids=PIDS.slice().sort((a,b)=>stockOf(a)-stockOf(b));
   for(const id of ids){const space=Math.min(slotSpaceFor(P[id].cat),12);let q=Math.floor(space/6)*6;
     while(q>0&&(q>cap||P[id].buy*q>S.money))q-=6;if(q<=0)continue;
