@@ -850,7 +850,7 @@ function buildInteracts(){
   interacts.push({x:66.5,y:20,r:1.7,label:()=>'Autohaus',act:dlgDealer});
   interacts.push({get x(){return carSpot().x;},get y(){return carSpot().y;},r:1.5,cond:()=>!!S.car,label:()=>'Dein Auto – losfahren',act:()=>askDrive()});
   interacts.push({x:111.5,y:22,r:1.45,cond:()=>S.toyOwned&&insideB===toyIdx,label:regLabel,act:serve});
-  interacts.push({x:113.5,y:19.1,r:1.25,cond:()=>!!S.toyOwned,label:()=>S.toyOpen?'Schild umdrehen → Geschlossen':'Schild umdrehen → Geöffnet',act:()=>{S.toyOpen=!S.toyOpen;beep(S.toyOpen?880:440,.1,'square',.04);toast(S.toyOpen?'Dein Spielzeugladen ist jetzt geöffnet! Kunden kommen von 7 bis 21 Uhr.':'Dein Spielzeugladen ist jetzt geschlossen.',S.toyOpen?'good':'');save();}});
+  interacts.push({x:113.5,y:19.1,r:1.25,cond:()=>!!S.toyOwned,label:()=>S.toyOpen?'Schild umdrehen → Geschlossen':'Schild umdrehen → Geöffnet',act:()=>{S.toyOpen=!S.toyOpen;beep(S.toyOpen?880:440,.1,'square',.04);toast(S.toyOpen?'Dein Spielzeugladen ist jetzt geöffnet! Geöffnet ist von 9 bis 18 Uhr.':'Dein Spielzeugladen ist jetzt geschlossen.',S.toyOpen?'good':'');save();}});
   TOY_SLOTS.forEach((s,i)=>interacts.push({x:s.x+s.w/2,y:s.y+s.h/2,r:Math.max(s.w,s.h)/2+.85,cond:()=>S.toyOwned&&insideB===toyIdx,label:()=>{const sl=S.toySlots&&S.toySlots[i];return sl?`Spielzeugregal (${slotSum(sl)}/${FURN.toy.cap}) befüllen`:'';},act:()=>dlgToySlot(i)}));
   interacts.push({x:117.5,y:19,r:1.5,label:()=>S.toyOwned?'Spielzeugladen – dein Laden':'Schild „Zu verkaufen“ lesen',act:()=>S.toyOwned?toast('Das ist dein Spielzeugladen.'):dlgBuyToy()});
   DEALER.forEach((c,i)=>interacts.push({x:c.x,y:c.y,r:1.4,label:()=>S.car&&S.car.i===i?'Dein Auto':`${c.n} – ${eur(c.price)}`,act:dlgDealer}));
@@ -871,7 +871,7 @@ function findInteract(){
   return best;
 }
 function doInteract(){if(storyOpen){sayKey();return;}if(dlgOpen||mapOpen||introOpen())return;const it=findInteract();if(it){blip();it.act();}}
-function toggleOpen(){S.open=!S.open;beep(S.open?880:440,.1,'square',.04);toast(S.open?`„${S.shopName}“ ist jetzt geöffnet! Kunden kommen von 7 bis 21 Uhr.`:`„${S.shopName}“ ist jetzt geschlossen.`,S.open?'good':'');}
+function toggleOpen(){S.open=!S.open;beep(S.open?880:440,.1,'square',.04);toast(S.open?`„${S.shopName}“ ist jetzt geöffnet! Geöffnet ist von 9 bis 18 Uhr.`:`„${S.shopName}“ ist jetzt geschlossen.`,S.open?'good':'');}
 function serve(){
   const toy=insideB===toyIdx,c=(toy?tqueue:queue)[0],lim=toy?111.2:31.2;
   if(!c||c.state!=='register'){toast(c?'Der Kunde kommt gleich zur Kasse …':'Gerade wartet niemand an der Kasse.');return;}
@@ -1424,6 +1424,18 @@ function update(dt,extra){
   checkApplicant();checkToyApplicant();if(storyOpen)return;
   checkToyCall();checkMall();if(storyOpen)return;
   updateEmp(dt);updateTEmp(dt);updateElecStaff(dt);
+  // Ladenöffnung 9–18 Uhr: um 18 Uhr schließen alle eigenen Läden automatisch, um 9 Uhr öffnen Angestellte
+  {const hh=S.time/60;
+   if(hh>=18&&S.closeDay!==S.day){S.closeDay=S.day;const zu=[];
+     if(S.owned&&S.open){S.open=false;zu.push('Mini-Markt');}
+     if(S.toyOwned&&S.toyOpen){S.toyOpen=false;zu.push('Spielzeugladen');}
+     if(S.elecOwned)zu.push('Elektromarkt');
+     if(zu.length){beep(440,.12,'square',.04);beep(330,.18,'square',.04,.12);toast(`🔴 18:00 Uhr – Feierabend! ${zu.join(', ').replace(/, ([^,]*)$/,' und $1')} ${zu.length>1?'sind':'ist'} jetzt geschlossen.`);save();}}
+   if(hh>=9&&hh<18&&S.openDay!==S.day){S.openDay=S.day;const auf=[];
+     if(S.owned&&S.employee&&!S.open){S.open=true;auf.push('Mini-Markt');}
+     if(S.toyOwned&&S.toyEmployee&&!S.toyOpen){S.toyOpen=true;auf.push('Spielzeugladen');}
+     if(S.elecOwned)auf.push('Elektromarkt');
+     if(auf.length){beep(880,.1,'square',.04);beep(1175,.15,'square',.04,.1);toast(`🟢 9:00 Uhr – ${auf.join(', ').replace(/, ([^,]*)$/,' und $1')} ${auf.length>1?'haben':'hat'} geöffnet.`,'good');save();}}}
   if(S.hired&&!S.owned&&!shopHours()&&S.open){S.open=false;npcs.forEach(n=>{if(n.kind==='cust'&&n.state!=='leave'){returnItems(n);leave(n);}});}
   if(Math.floor(S.time/60)===22&&warnedLate!==S.day){warnedLate=S.day;toast('Es ist spät – du kannst zu Hause im Bett schlafen.');}
   // Spieler
@@ -1471,9 +1483,9 @@ function update(dt,extra){
   if(walkers<wantW&&R2()<dt*.5)spawnWalker();
   if(walkers>wantW){const w=npcs.find(n=>n.kind==='walk'&&n.state==='wait');if(w)w.dead=true;}
   spawnT-=dt;
-  elecSpawnT-=dt;if(elecSpawnT<=0){elecSpawnT=((11-(S.elecRep??60)*.07)/2)*(.6+R2()*.8)*weatherMul();const ec=npcs.filter(n=>n.kind==='ecust').length;if(S.elecOwned&&hr>=8&&hr<20&&ec<17)spawnECust();}
-  toySpawnT-=dt;if(toySpawnT<=0){toySpawnT=(13-(S.toyRep??50)*.08)*(.6+R2()*.8)*weatherMul();const tc=npcs.filter(n=>n.kind==='cust'&&n.toy).length;if(S.toyOwned&&S.toyOpen&&hr>=7&&hr<21&&tc<8)spawnToyCustomer();}
-  if(spawnT<=0){spawnT=(S.owned?(11-S.rep*.07):(17-S.rep*.11))*(.6+R2()*.8)*weatherMul();const cu=npcs.filter(n=>n.kind==='cust'&&!n.toy).length;if(S.open&&((S.owned&&hr>=7&&hr<21)||(S.hired&&!S.owned&&shopHours()))&&cu<(S.owned?12:6))spawnCustomer();}
+  elecSpawnT-=dt;if(elecSpawnT<=0){elecSpawnT=((11-(S.elecRep??60)*.07)/2)*(.6+R2()*.8)*weatherMul();const ec=npcs.filter(n=>n.kind==='ecust').length;if(S.elecOwned&&hr>=9&&hr<18&&ec<17)spawnECust();}
+  toySpawnT-=dt;if(toySpawnT<=0){toySpawnT=(13-(S.toyRep??50)*.08)*(.6+R2()*.8)*weatherMul();const tc=npcs.filter(n=>n.kind==='cust'&&n.toy).length;if(S.toyOwned&&S.toyOpen&&hr>=9&&hr<18&&tc<8)spawnToyCustomer();}
+  if(spawnT<=0){spawnT=(S.owned?(11-S.rep*.07):(17-S.rep*.11))*(.6+R2()*.8)*weatherMul();const cu=npcs.filter(n=>n.kind==='cust'&&!n.toy).length;if(S.open&&((S.owned&&hr>=9&&hr<18)||(S.hired&&!S.owned&&shopHours()))&&cu<(S.owned?12:6))spawnCustomer();}
   // Interaktion
   curIt=findInteract();
   const pr=$('prompt');if(curIt){const t=`<span class="key">${isTouch?'E':'E'}</span>${esc(curIt.label())}`;if(pr.innerHTML!==t)pr.innerHTML=t;pr.style.display='block';}else pr.style.display='none';
@@ -1705,7 +1717,7 @@ function updateEmp(dt){
   emp.moving=false;
   if(emp.state==='applicant'||emp.state==='talk'||emp.state==='leaving')return;
   if(!S.employee){return;}
-  const h=S.time/60,workTime=h>=7&&h<21;
+  const h=S.time/60,workTime=h>=8.5&&h<18.5;
   if(!workTime){if(emp.here&&emp.state!=='home'){emp.state='home';empGo(34,18,[shopIdx,wholeIdx],()=>{emp.here=false;emp.state='off2';});}return;}
   if(!emp.here){emp.x=34.5;emp.y=18.72;emp.here=true;emp.state='work';empGo(30,22,[shopIdx]);return;}
   if(emp.state==='buy'){emp.t-=dt;if(emp.t<=0)empBuy();return;}
@@ -1772,7 +1784,7 @@ function updateTEmp(dt){
   temp.moving=false;
   if(temp.state==='applicant'||temp.state==='talk'||temp.state==='leaving')return;
   if(!S.toyEmployee)return;
-  const h=S.time/60,workTime=h>=7&&h<21;
+  const h=S.time/60,workTime=h>=8.5&&h<18.5;
   if(!workTime){if(temp.here&&temp.state!=='home'){temp.state='home';tempGo(114,18,()=>{temp.here=false;temp.state='off2';});}return;}
   if(!temp.here){temp.x=114.5;temp.y=18.72;temp.here=true;temp.state='work';tempGo(TREG[0],TREG[1]);return;}
   if(temp.state==='order'){temp.t-=dt;if(temp.t<=0)tempOrder();return;}
@@ -1866,7 +1878,7 @@ function updateECust(n,dt){
   }
 }
 function updateElecStaff(dt){
-  if(!S.elecOwned)return;const h=S.time/60,work=h>=7&&h<21;
+  if(!S.elecOwned)return;const h=S.time/60,work=h>=8.5&&h<18.5;
   elecStaff.forEach(st=>{st.here=work;});if(!work)return;
   const [c,k]=elecStaff;
   // Kasse
