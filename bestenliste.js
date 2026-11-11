@@ -12,7 +12,8 @@ const BL_SPIELE = {
         "handball-3d": { speicher: "hbStats", feld: "wins", titel: "Siege" },
         "volleyball-3d": { speicher: "vbStats", feld: "wins", titel: "Siege", tore: "Punkte", ohne: ["sieg"] },
         "tennis-3d": { speicher: "tnStats", feld: "wins", titel: "Siege", tore: "Punkte", ohne: ["sieg"] },
-        "badminton-3d": { speicher: "bdStats", feld: "wins", titel: "Siege", tore: "Punkte", ohne: ["sieg"] }      // ohne = Ranglisten, die bei diesem Spiel nicht angezeigt werden
+        "badminton-3d": { speicher: "bdStats", feld: "wins", titel: "Siege", tore: "Punkte", ohne: ["sieg"] },
+        "mini-markt": { speicher: "mmStats", feld: "umsatz", titel: "Umsatz", euro: true, ohne: ["tore", "pokale", "sieg", "serie"] }      // ohne = Ranglisten, die bei diesem Spiel nicht angezeigt werden
 };
 
 // ================================================================
@@ -85,8 +86,10 @@ const BL_SPIELE = {
    const sieg = t => { const m = /^\s*(\d+)\s*:\s*(\d+)/.exec(t || ""); return m ? [+m[1] - +m[2], +m[1]] : [-1, -1]; };
    // Basketball, Volleyball und Tennis zählen Punkte statt Tore
    const punkte = () => ((BL_SPIELE[offen] || {}).tore === "Punkte");
+   // Mini-Markt zählt den Umsatz in Euro statt Siegen
+   const euro = () => !!(BL_SPIELE[offen] || {}).euro;
    const KAT = [
-             { id: "siege", t: "Siege", wert: e => Number(e.siege) || 0, text: v => v + (v === 1 ? " Sieg" : " Siege") },
+             { id: "siege", get t() { return euro() ? "Umsatz" : "Siege"; }, wert: e => Number(e.siege) || 0, text: v => euro() ? v.toLocaleString("de-DE") + " €" : v + (v === 1 ? " Sieg" : " Siege") },
              { id: "tore", get t() { return punkte() ? "Punkte" : "Tore"; }, wert: e => Number(e.tore) || 0, text: v => v + (punkte() ? (v === 1 ? " Punkt" : " Punkte") : (v === 1 ? " Tor" : " Tore")) },
              { id: "pokale", t: "Pokale", wert: e => Number(e.pokale) || 0, text: v => v + (v === 1 ? " Pokal" : " Pokale") },
              { id: "sieg", t: "Höchster Sieg", wert: e => sieg(e.hoechster_sieg), text: (v, e) => e.hoechster_sieg ? esc(e.hoechster_sieg) : "–" },
@@ -166,7 +169,7 @@ const BL_SPIELE = {
                                                                          <button class="btn sm" id="blSave" type="button">${name ? "Namen ändern" : "Mitmachen"}</button>
                                                                                  </div>
                                                                                          <div class="err" id="blErr">${hinweis ? esc(hinweis) : ""}</div>
-                                                                                                 <div class="info">Deine ${esc(cfg.titel)} (alle Geräte zusammen): <b>${eigeneSiege(cfg)}</b>. Sie werden automatisch übertragen, wenn du das Spiel schließt.</div>`;
+                                                                                                 <div class="info">${cfg.euro ? `Dein ${esc(cfg.titel)} (alle Läden zusammen): <b>${eigeneSiege(cfg).toLocaleString("de-DE")} €</b>. Er wird automatisch übertragen, wenn du das Spiel schließt.` : `Deine ${esc(cfg.titel)} (alle Geräte zusammen): <b>${eigeneSiege(cfg)}</b>. Sie werden automatisch übertragen, wenn du das Spiel schließt.`}</div>`;
                          const inp = box.querySelector("#blName"), btn = box.querySelector("#blSave");
                          const save = async () => {
                                        const v = inp.value.replace(/\s+/g, " ").trim();
