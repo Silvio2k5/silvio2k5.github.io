@@ -344,7 +344,7 @@ const SHOP_ENTRY=[34,20];
 const SAVE_KEY='minimarkt_save_v1';
 function newState(){return {money:0,day:1,time:8*60,owned:false,open:false,slots:[null,null,null,null,null],inv:{},rep:50,served:0,revenue:0,goal:0,shopName:'Mini-Markt',px:8.5,py:12.7,todayRev:0,todayCust:0,muted:false,avatar:null,welcomed:false,introDone:false,applied:false,invited:false,callAt:null,callDeclined:false,hired:false,workMin:0,warnings:0,arrivedDay:null,lastWorkDay:null,wage:0};}
 let S=newState();
-function save(){try{S.px=player.x;S.py=player.y;localStorage.setItem(SAVE_KEY,JSON.stringify(S));localStorage.setItem('mmStats',JSON.stringify({umsatz:Math.floor(umsatzGesamt())}));}catch(e){}}
+function save(){if(typeof syLoaded!=='undefined'&&syLoaded)return;let st=false;try{st=started;}catch(e){}try{if(st)S.savedAt=Date.now();S.px=player.x;S.py=player.y;localStorage.setItem(SAVE_KEY,JSON.stringify(S));localStorage.setItem('mmStats',JSON.stringify({umsatz:Math.floor(umsatzGesamt())}));}catch(e){}}
 function umsatzGesamt(){return S.umsatz??(S.revenue||0);}
 function addUmsatz(v){S.umsatz=umsatzGesamt()+v;}
 function load(){try{const d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(d&&typeof d.money==='number'){S=Object.assign(newState(),d);return true;}}catch(e){}return false;}
@@ -1030,7 +1030,7 @@ function sleep(home){
     if(home){player.x=7.5;player.y=8.75;player.dir='down';player.moving=false;}
     npcs.forEach(n=>{if(n.kind==='cust')returnItems(n);});
     for(let k=npcs.length-1;k>=0;k--)if(npcs[k].kind==='cust'||npcs[k].kind==='ecust')npcs.splice(k,1);
-    queue.length=0;tqueue.length=0;equeue.length=0;ensureWeather();save();{const n=playerName();if(n&&n!=='Spieler')lbMelden(n).catch(()=>{});}
+    queue.length=0;tqueue.length=0;equeue.length=0;ensureWeather();save();{const n=playerName();if(n&&n!=='Spieler')lbMelden(n).catch(()=>{});}cloudSave();
     setTimeout(()=>toast(`Wetter heute: ${WINFO[S.weather].i} ${WINFO[S.weather].n}`+(S.weather==='rain'?' – bei Regen kommen etwas weniger Kunden.':'.')),1400);
     setTimeout(()=>{$('fade').style.opacity=0;toast(S.owned?`Guten Morgen! Tag ${S.day}. Gestern: ${cu} Kunden, ${eur(rev)} Umsatz`+(S.employee?`, ${eur(S.lastCost||0)} Einkauf, Lohn Aushilfe ${eur(S.lastWage||0)}.`:'.')+(S.toyOwned?` Spielzeugladen: ${eur(S.lastToyRev||0)} Umsatz`+(S.toyEmployee?`, ${eur(S.lastToyCost||0)} Einkauf, Lohn Aushilfe ${eur(S.lastToyWage||0)}.`:'.'):'')+(S.elecOwned?` Elektromarkt: ${eur(S.lastElecRev||0)} Umsatz, ${eur(S.lastElecCost||0)} Einkauf, Lohn Angestellte ${eur(S.lastElecWage||0)}.`:''):(S.hired&&S.day===S.startDay?`Guten Morgen! Tag ${S.day} – dein erster Arbeitstag. Sei um 9 Uhr im Mini-Markt!`:`Guten Morgen! Tag ${S.day}.`+(S.hired?' Um 9 Uhr geht die Arbeit los.':'')),'good');},500);
   },700);
@@ -1040,9 +1040,9 @@ function dlgMenu(){
    <div class="info">Tag ${S.day} · Umsatz gesamt: <b>${eur(S.revenue)}</b><br>Kunden bedient: <b>${S.served}</b> · Ruf: <b>${Math.round(S.rep)}/100</b>${S.owned?`<br>Laden: <b>${esc(S.shopName)}</b> (${S.open?'geöffnet':'geschlossen'})`:''}</div>
    <p style="color:#7ee081">Steuerung</p><p class="sub">${ctlHTML()}</p>
    <p style="color:#7ee081">So läuft's</p><p class="sub">Kauf den leeren Laden, stell Regale auf, hol Ware im Großhandel, räum sie ein und öffne den Laden. Kunden suchen sich Ware aus und warten an der Kasse – stell dich dahinter und kassiere. Abends kannst du zu Hause schlafen.</p>
-   <div class="btns"><button class="btn green" data-act="save">SPEICHERN</button><button class="btn" data-act="lb">🏆 BESTENLISTE</button><button class="btn" data-act="mute">TON ${S.muted?'AN':'AUS'}</button><button class="btn" data-act="start">STARTMENÜ</button><button class="btn red" data-act="reset">NEUES SPIEL</button></div><div class="btns" style="margin-top:8px"><button class="btn gray" data-act="leave">🚪 SPIEL VERLASSEN</button></div>`,
+   <div class="btns"><button class="btn green" data-act="save">SPEICHERN</button><button class="btn" data-act="lb">🏆 BESTENLISTE</button><button class="btn" data-act="mute">TON ${S.muted?'AN':'AUS'}</button><button class="btn" data-act="start">STARTMENÜ</button><button class="btn red" data-act="reset">NEUES SPIEL</button></div><p class="sub" style="margin-top:10px">${cloudInfo()}</p><div class="btns" style="margin-top:8px"><button class="btn gray" data-act="leave">🚪 SPIEL VERLASSEN</button></div>`,
   {leave(){leaveGame();},lb(){dlgLB();},start(){closeDialog();openStart();},save(){save();toast('Gespeichert.','good');},mute(){S.muted=!S.muted;if(S.muted)musicStop();else musicStart();musicBtn();closeDialog();dlgMenu();},
-   reset(){showDialog('Neues Spiel?',`<p>Dein aktueller Spielstand wird gelöscht. Sicher?</p><div class="btns"><button class="btn red" data-act="yes">JA, NEU STARTEN</button><button class="btn gray" data-act="close">ABBRECHEN</button></div>`,{yes(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}S=newState();resetWorld();loaded=false;started=false;closeDialog();openStart();showChar();}});}});
+   reset(){showDialog('Neues Spiel?',`<p>Dein aktueller Spielstand wird gelöscht. Sicher?</p><div class="btns"><button class="btn red" data-act="yes">JA, NEU STARTEN</button><button class="btn gray" data-act="close">ABBRECHEN</button></div>`,{yes(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}S=newState();resetWorld();save();loaded=false;started=false;closeDialog();openStart();showChar();}});}});
 }
 function ctlHTML(){return isTouch?'Joystick (links) zum Laufen · Knopf E zum Interagieren · 🗺️ für die Karte · ☰ → Startmenü':'WASD / Pfeiltasten: laufen · E / Leertaste: interagieren · M: Karte · Z: Aufgaben · Mausrad: Zoom · Esc: Startmenü';}
 
@@ -1095,9 +1095,36 @@ async function dlgLB(){
   }catch(e){const box=$('lbBox');if(box)box.textContent='Die Bestenliste konnte gerade nicht geladen werden. Prüfe deine Internetverbindung.';}
 }
 
+// ---------- Spielstand im Profil (online, automatisch) ----------
+let cloudBusy=false,cloudSent='',cloudOk=null,cloudAt=0;
+function lsRaw(){try{return localStorage.getItem(SAVE_KEY);}catch(e){return null;}}
+async function cloudSave(keep){
+  if(cloudBusy||syLoaded||!started)return;const txt=lsRaw();if(!txt||txt===cloudSent)return;
+  cloudBusy=true;
+  try{const r=await fetch(LB_URL+'/rest/v1/rpc/spielstand_cloud_speichern',{method:'POST',headers:lbHead(),keepalive:!!keep&&txt.length<60000,body:JSON.stringify({p_spieler:lbId(),p_spiel:'mini-markt',p_daten:JSON.parse(txt)})});
+    if(!r.ok)throw 0;cloudSent=txt;cloudOk=true;cloudAt=Date.now();}catch(e){cloudOk=false;}
+  cloudBusy=false;
+}
+async function cloudLoad(){
+  try{const r=await fetch(LB_URL+'/rest/v1/rpc/spielstand_cloud_laden',{method:'POST',headers:lbHead(),body:JSON.stringify({p_spieler:lbId(),p_spiel:'mini-markt'})});
+    if(!r.ok)throw 0;const res=await r.json();cloudOk=true;
+    const d=res&&res.daten;if(!d||typeof d.money!=='number')return false;
+    const local=(()=>{try{return JSON.parse(lsRaw()||'null');}catch(e){return null;}})();
+    if(local&&(local.savedAt||0)>=(d.savedAt||0)){cloudSent=JSON.stringify(d)===lsRaw()?lsRaw():'';return false;}
+    let guard=null;try{guard=sessionStorage.getItem('mm-cloud-reload');}catch(e){}
+    if(guard===String(d.savedAt))return false;
+    // Profil-Spielstand ist neuer (z. B. vom anderen Gerät) -> übernehmen
+    syLoaded=true;try{localStorage.setItem(SAVE_KEY,JSON.stringify(d));localStorage.setItem('mmStats',JSON.stringify({umsatz:Math.floor(d.umsatz??d.revenue??0)}));sessionStorage.setItem('mm-cloud-reload',String(d.savedAt));}catch(e){}
+    location.reload();return true;
+  }catch(e){cloudOk=false;return false;}
+}
+function cloudInfo(){if(cloudOk===false)return '☁️ Profil-Speicherung gerade nicht erreichbar – dein Spielstand ist auf diesem Gerät gesichert.';
+  if(!cloudAt)return '☁️ Dein Spielstand wird automatisch in deinem Profil gespeichert.';
+  const m=Math.round((Date.now()-cloudAt)/60000);return `☁️ Im Profil gespeichert ${m<1?'gerade eben':'vor '+m+' Min.'} – auf jedem Gerät mit deinem Profil spielst du weiter.`;}
+let syLoaded=false;
 // ---------- Spiel verlassen (zurück zur Spielbibliothek) ----------
 function leaveGame(){
-  save();closeDialog();musicStop();
+  save();cloudSave(true);closeDialog();musicStop();
   {const n=playerName();if(n&&n!=='Spieler')lbMelden(n).catch(()=>{});}
   try{if(window.parent&&window.parent!==window){const b=window.parent.document.getElementById('pBack');if(b){b.click();return;}}}catch(e){}
   if(window.parent&&window.parent!==window){toast('Hier kannst du das Spiel einfach schließen – dein Spielstand ist gespeichert.','good');return;}
@@ -1597,7 +1624,7 @@ function gameOver(){
     <p style="margin:0 0 20px;color:#a9b4d8">Das Spiel ist vorbei. Tag ${S.day} · ${eur(S.money)} gespart</p>
     <button class="btn green" id="goNew">NEUES SPIEL STARTEN</button></div>`;
   document.body.appendChild(d);
-  $('goNew').onclick=()=>{try{localStorage.removeItem(SAVE_KEY);}catch(e){}d.remove();S=newState();resetWorld();loaded=false;started=false;storyOpen=false;sayHide();openStart();showChar();musicBtn();};
+  $('goNew').onclick=()=>{try{localStorage.removeItem(SAVE_KEY);}catch(e){}d.remove();S=newState();resetWorld();save();loaded=false;started=false;storyOpen=false;sayHide();openStart();showChar();musicBtn();};
 }
 
 // ---------- Mini-Markt kaufen & Abschied ----------
@@ -2067,7 +2094,7 @@ function beginGame(){
 $('bChar').onclick=()=>{audioInit();showChar();};
 $('bCharBack').onclick=()=>showMain();
 $('bCharOk').onclick=()=>{audioInit();const first=S.avatar==null;S.avatar=avSel;applyAvatar();save();kaching();if(first&&!started){started=true;$('intro').style.display='none';if(needStory())startStory();}else beginGame();};
-$('bNew').onclick=()=>{const b=$('bNew');if(b.dataset.c!=='1'){b.dataset.c='1';b.textContent='WIRKLICH LÖSCHEN?';return;}try{localStorage.removeItem(SAVE_KEY);}catch(e){}S=newState();resetWorld();loaded=false;started=false;showChar();};
+$('bNew').onclick=()=>{const b=$('bNew');if(b.dataset.c!=='1'){b.dataset.c='1';b.textContent='WIRKLICH LÖSCHEN?';return;}try{localStorage.removeItem(SAVE_KEY);}catch(e){}S=newState();resetWorld();save();loaded=false;started=false;showChar();};
 applyAvatar();showMain();$('bFast').classList.toggle('on',!!S.fast);musicBtn();if(S.fired)gameOver();
 if(isTouch){$('btnAct').style.display='block';}
 let COL={};try{COL=JSON.parse(localStorage.getItem('mm-col')||'{}')||{};}catch(e){}
@@ -2081,7 +2108,9 @@ function mobLayout(){document.body.classList.toggle('rot',isTouch&&innerHeight>i
 mobLayout();addEventListener('resize',mobLayout);addEventListener('orientationchange',()=>setTimeout(mobLayout,200));
 $('bStart').onclick=()=>{audioInit();if(S.avatar==null)showChar();else beginGame();};
 if(document.fonts&&document.fonts.load){Promise.all([document.fonts.load('8px "Press Start 2P"'),document.fonts.load('20px VT323')]).then(()=>{buildRoofs();renderBase();}).catch(()=>{});}
-addEventListener('visibilitychange',()=>{if(document.hidden)save();});
+addEventListener('visibilitychange',()=>{if(document.hidden){save();cloudSave(true);}});
+setInterval(()=>{if(started&&!S.fired)cloudSave();},60000);
+cloudLoad();
 let last=performance.now();
 function loop(){const now=performance.now(),dt=Math.max(0,Math.min(.05,(now-last)/1000));last=now;if(wakeT>0){wakeT-=dt;const f=$('fade');f.style.opacity=Math.min(1,Math.max(0,wakeT/1.4));if(wakeT<=0){f.style.opacity=0;f.style.transition='opacity .6s';}}if(introOpen()){tGlobal+=dt;if($('vChar').style.display!=='none')drawAvatars();}else{update(dt);if(S.fast)update(dt,true);}render();hud();requestAnimationFrame(loop);}
 requestAnimationFrame(loop);
