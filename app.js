@@ -49,7 +49,7 @@
   // Singleplayer-Spiele mit Online-Bestenliste
   const SOLO_SPIELE = ['mini-markt'];
   const xBadge = id => { const s = document.createElement('span'); s.className = 'xbadge';
-    if (SOLO_SPIELE.includes(id)) { s.textContent = '👤 Singleplayer · Online-Bestenliste'; s.title = 'Allein spielen – dein Ergebnis kommt in die weltweite Bestenliste'; }
+    if (SOLO_SPIELE.includes(id)) { s.textContent = '👤 Singleplayer'; s.title = 'Allein spielen – dein Ergebnis kommt in die weltweite Bestenliste'; }
     else { s.textContent = '🌐 Online · Crossplay PC & Handy'; s.title = 'Online 1 gegen 1 – PC und Handy können gegeneinander spielen'; }
     return s; };
   function badges() {
