@@ -52,6 +52,31 @@ body.mob.port #toasts{top:calc(210px + env(safe-area-inset-top))}
 body.mob.land #goal{top:calc(88px + env(safe-area-inset-top));max-width:40vw}
 body.mob.land #toasts{top:calc(56px + env(safe-area-inset-top));width:50vw}
 @media (max-height:500px){#intro .box{padding:12px 14px;width:min(640px,94vw)}#intro .av canvas{width:44px;height:58px}#intro #avGrid{grid-template-columns:repeat(6,1fr);gap:6px}#intro h2{margin-bottom:8px}#intro .ctl{font-size:16px;margin:8px auto 10px}#intro .sub2{font-size:17px;margin-bottom:8px}#intro h1{font-size:22px}}
+/* Einklappbare Seitenfenster */
+.ptg{position:absolute;top:3px;right:3px;width:22px;height:20px;padding:0;font-family:'VT323',monospace;font-size:18px;line-height:16px;text-align:center;background:#2a2f45;border:2px solid #0c0e16;color:#ffd77a;cursor:pointer;pointer-events:auto;border-radius:3px;z-index:2}
+#hud,#goal,#shoplist{padding-right:32px!important}
+#hud.col #hTime,#hud.col #hRep,#hud.col #hShop{display:none}
+#goal.col #goalT{display:none}#goal.col .gl{margin:3px 0 2px}
+#shoplist.col .sl-i,#shoplist.col .dl{display:none}#shoplist.col .sl-t{margin:3px 0 1px}
+/* Handy drehen */
+#rotate{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(circle at 50% 40%,#2c3350,#10121b);color:#f4efe1;text-align:center;padding:24px}
+#rotate .ph{width:56px;height:96px;border:5px solid #ffd77a;border-radius:10px;position:relative;animation:rot 2.2s ease-in-out infinite}
+#rotate .ph:after{content:'';position:absolute;left:50%;bottom:6px;width:10px;height:4px;margin-left:-5px;background:#ffd77a;border-radius:2px}
+@keyframes rot{0%,25%{transform:rotate(0)}55%,100%{transform:rotate(-90deg)}}
+#rotate h2{font-family:'Press Start 2P',monospace;font-size:14px;color:#ffd77a;margin:0;line-height:1.6}
+#rotate p{font-size:20px;margin:0;color:#a9b4d8}
+body.rot #rotate{display:flex}
+/* Querformat am Handy: alles kompakter */
+body.mob.land #hud{font-size:15px;padding:3px 8px}body.mob.land #hMoney{font-size:17px}
+body.mob.land #goal{font-size:14px;padding:4px 8px;max-width:34vw;top:calc(84px + env(safe-area-inset-top))}
+body.mob.land #shoplist{top:calc(50px + env(safe-area-inset-top));bottom:auto;right:calc(8px + env(safe-area-inset-right));font-size:15px;padding:4px 8px;min-width:0;line-height:1.05}
+body.mob.land #shoplist .dl{font-size:13px}
+body.mob.land #shoplist .sl-t{font-size:7px}
+body.mob.land #say{width:min(280px,46vw);font-size:16px}
+body.mob.land #prompt{font-size:15px;bottom:calc(10px + env(safe-area-inset-bottom))}
+body.mob.land #dlg{font-size:16px;max-height:92vh;width:min(560px,90vw)}
+body.mob.land #btnAct{width:64px;height:64px;bottom:calc(18px + env(safe-area-inset-bottom))}
+body.mob.land #toasts{font-size:15px}
 #topBtns{position:fixed;right:calc(8px + env(safe-area-inset-right));top:calc(8px + env(safe-area-inset-top));display:flex;gap:6px;z-index:6}
 .btn{font-family:'Press Start 2P',monospace;font-size:10px;background:#f2b134;color:#1c1c1c;border:3px solid #0c0e16;box-shadow:inset -3px -3px 0 #c98a17,inset 3px 3px 0 #ffd77a;padding:9px 11px;cursor:pointer;border-radius:2px;line-height:1.2}
 .btn:active{transform:translateY(2px)}
@@ -146,8 +171,8 @@ input[type=text]{font-family:'VT323',monospace;font-size:22px;background:#f4efe1
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="hud" class="panel"><div id="hMoney"></div><div id="hTime"></div><div id="hRep"></div><div id="hShop"></div></div>
-<div id="goal" class="panel"><span class="gl">ZIEL</span><span id="goalT"></span></div>
+<div id="hud" class="panel"><button class="ptg" data-col="hud" aria-label="Ein-/ausklappen">–</button><div id="hMoney"></div><div id="hTime"></div><div id="hRep"></div><div id="hShop"></div></div>
+<div id="goal" class="panel"><button class="ptg" data-col="goal" aria-label="Ein-/ausklappen">–</button><span class="gl">ZIEL</span><span id="goalT"></span></div>
 <div id="topBtns"><button class="btn sm" id="bMusic" title="Hintergrundmusik an/aus">🎵</button><div id="volWrap" title="Lautstärke der Musik"><input type="range" id="volR" min="0" max="100" step="1" value="60"></div><button class="btn sm" id="bFast" title="Doppelte Geschwindigkeit">⏩ 2×</button><button class="btn sm" id="bInv">📦 0/36</button><button class="btn sm" id="bGoals" title="Alle Aufgaben (Z)">📋 Ziele</button><button class="btn sm" id="bMap">🗺️ Karte</button><button class="btn sm" id="bMenu">☰</button></div>
 <div id="prompt" class="panel"></div>
 <div id="toasts"></div>
@@ -157,6 +182,7 @@ input[type=text]{font-family:'VT323',monospace;font-size:22px;background:#f4efe1
 <div id="joy"><div id="knob"></div></div>
 <button id="btnAct" class="btn">E</button>
 <div id="fade"></div>
+<div id="rotate"><div class="ph"></div><h2>BITTE HANDY DREHEN</h2><p>Mini-Markt spielst du im Querformat.</p></div>
 <div id="paper"><div class="pp">
   <div class="pmast">STADT-ANZEIGER</div>
   <div class="pdate">Die Zeitung für unsere kleine Stadt · Preis 1,20 €</div>
@@ -1014,8 +1040,8 @@ function dlgMenu(){
    <div class="info">Tag ${S.day} · Umsatz gesamt: <b>${eur(S.revenue)}</b><br>Kunden bedient: <b>${S.served}</b> · Ruf: <b>${Math.round(S.rep)}/100</b>${S.owned?`<br>Laden: <b>${esc(S.shopName)}</b> (${S.open?'geöffnet':'geschlossen'})`:''}</div>
    <p style="color:#7ee081">Steuerung</p><p class="sub">${ctlHTML()}</p>
    <p style="color:#7ee081">So läuft's</p><p class="sub">Kauf den leeren Laden, stell Regale auf, hol Ware im Großhandel, räum sie ein und öffne den Laden. Kunden suchen sich Ware aus und warten an der Kasse – stell dich dahinter und kassiere. Abends kannst du zu Hause schlafen.</p>
-   <div class="btns"><button class="btn green" data-act="save">SPEICHERN</button><button class="btn" data-act="lb">🏆 BESTENLISTE</button><button class="btn" data-act="mute">TON ${S.muted?'AN':'AUS'}</button><button class="btn" data-act="start">STARTMENÜ</button><button class="btn red" data-act="reset">NEUES SPIEL</button></div>`,
-  {lb(){dlgLB();},start(){closeDialog();openStart();},save(){save();toast('Gespeichert.','good');},mute(){S.muted=!S.muted;if(S.muted)musicStop();else musicStart();musicBtn();closeDialog();dlgMenu();},
+   <div class="btns"><button class="btn green" data-act="save">SPEICHERN</button><button class="btn" data-act="lb">🏆 BESTENLISTE</button><button class="btn" data-act="mute">TON ${S.muted?'AN':'AUS'}</button><button class="btn" data-act="start">STARTMENÜ</button><button class="btn red" data-act="reset">NEUES SPIEL</button></div><div class="btns" style="margin-top:8px"><button class="btn gray" data-act="leave">🚪 SPIEL VERLASSEN</button></div>`,
+  {leave(){leaveGame();},lb(){dlgLB();},start(){closeDialog();openStart();},save(){save();toast('Gespeichert.','good');},mute(){S.muted=!S.muted;if(S.muted)musicStop();else musicStart();musicBtn();closeDialog();dlgMenu();},
    reset(){showDialog('Neues Spiel?',`<p>Dein aktueller Spielstand wird gelöscht. Sicher?</p><div class="btns"><button class="btn red" data-act="yes">JA, NEU STARTEN</button><button class="btn gray" data-act="close">ABBRECHEN</button></div>`,{yes(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}S=newState();resetWorld();loaded=false;started=false;closeDialog();openStart();showChar();}});}});
 }
 function ctlHTML(){return isTouch?'Joystick (links) zum Laufen · Knopf E zum Interagieren · 🗺️ für die Karte · ☰ → Startmenü':'WASD / Pfeiltasten: laufen · E / Leertaste: interagieren · M: Karte · Z: Aufgaben · Mausrad: Zoom · Esc: Startmenü';}
@@ -1069,6 +1095,14 @@ async function dlgLB(){
   }catch(e){const box=$('lbBox');if(box)box.textContent='Die Bestenliste konnte gerade nicht geladen werden. Prüfe deine Internetverbindung.';}
 }
 
+// ---------- Spiel verlassen (zurück zur Spielbibliothek) ----------
+function leaveGame(){
+  save();closeDialog();musicStop();
+  {const n=playerName();if(n&&n!=='Spieler')lbMelden(n).catch(()=>{});}
+  try{if(window.parent&&window.parent!==window){const b=window.parent.document.getElementById('pBack');if(b){b.click();return;}}}catch(e){}
+  if(window.parent&&window.parent!==window){toast('Hier kannst du das Spiel einfach schließen – dein Spielstand ist gespeichert.','good');return;}
+  location.href='https://silvio2k5.github.io/';
+}
 // ---------- Aufgaben-Übersicht (Baum) ----------
 const GLABEL=()=>({__daily:'Arbeite jeden Tag im Mini-Markt und spare auf den Laden ('+eur(SALE_PRICE)+').',__car:'Kaufe ein Auto, um weitere Städte zu erkunden.',__drive:'Fahre in die nächste Stadt.',__toy:'Kaufe den Spielzeugladen ('+eur(TOY_PRICE)+').',__drive3:'Fahre in die Großstadt.',__elec:'Kaufe die leere Ladenfläche für einen Elektromarkt ('+eur(ELEC_PRICE)+').',__rich:'Werde reich! Spare '+eur(RICH_GOAL)+'.'});
 const GCHAP={0:'Kapitel 1 · Der Job',4:'Kapitel 2 · Dein eigener Laden',8:'Kapitel 3 · Die Nachbarstadt',14:'Kapitel 4 · Die Großstadt'};
@@ -1340,6 +1374,7 @@ function render(){
 let curIt=null,elecSpawnT=3,toySpawnT=3,spawnT=4,saveT=0,goalT=0,lastHud='',warnedLate=-1;
 function calcInside(){const pt=I(clamp(Math.floor(player.x),0,W-1),clamp(Math.floor(player.y-.2),0,H-1));insideB=(bmap[pt]>=0&&ground[pt]!==WALL)?bmap[pt]:-1;}
 function update(dt,extra){
+  if(document.body.classList.contains('rot')){player.moving=false;return;}
   ensureWeather();rainSound();
   if(S.fired){if(!$('goScreen'))gameOver();return;}
   tGlobal+=dt;
@@ -1865,7 +1900,8 @@ let lastList='';
 function updList(){
   const el=$('shoplist');
   if(S.task!=='einkauf'||introOpen()){if(el.style.display!=='none')el.style.display='none';lastList='';return;}
-  const h=`<div class="sl-t">EINKAUFSLISTE</div>`+errandList().map(([id,n])=>{const have=Math.min(bought(id),n);return `<div class="${have>=n?'ok':''}">${have>=n?'☑':'☐'} ${n}× ${P[id].n} <span class="sub">(${have}/${n})</span></div>`;}).join('')+`<div class="dl">${haveAll()?'Alles da – zurück zum Laden!':(S.errandFirst&&invCount()+PACK>INV_CAP?'Kiste voll – erst im Laden einräumen!':'')+' '+(S.taskDeadline==null?'Schnell zurück – die Kunden warten!':'Zurück bis '+hhmm(S.taskDeadline)+' Uhr')}</div>`;
+  const EL=errandList(),done=EL.filter(([id,n])=>bought(id)>=n).length;
+  const h=`<button class="ptg" data-col="list" aria-label="Ein-/ausklappen">${COL.list?'+':'–'}</button><div class="sl-t">EINKAUFSLISTE ${done}/${EL.length}</div>`+EL.map(([id,n])=>{const have=Math.min(bought(id),n);return `<div class="sl-i ${have>=n?'ok':''}">${have>=n?'☑':'☐'} ${n}× ${P[id].n} <span class="sub">(${have}/${n})</span></div>`;}).join('')+`<div class="dl">${haveAll()?'Alles da – zurück zum Laden!':(S.errandFirst&&invCount()+PACK>INV_CAP?'Kiste voll – erst im Laden einräumen!':'')+' '+(S.taskDeadline==null?'Schnell zurück – die Kunden warten!':'Zurück bis '+hhmm(S.taskDeadline)+' Uhr')}</div>`;
   if(h!==lastList){el.innerHTML=h;lastList=h;}el.style.display='block';
 }
 const endTalk=()=>{sayHide();storyOpen=false;};
@@ -2034,7 +2070,13 @@ $('bCharOk').onclick=()=>{audioInit();const first=S.avatar==null;S.avatar=avSel;
 $('bNew').onclick=()=>{const b=$('bNew');if(b.dataset.c!=='1'){b.dataset.c='1';b.textContent='WIRKLICH LÖSCHEN?';return;}try{localStorage.removeItem(SAVE_KEY);}catch(e){}S=newState();resetWorld();loaded=false;started=false;showChar();};
 applyAvatar();showMain();$('bFast').classList.toggle('on',!!S.fast);musicBtn();if(S.fired)gameOver();
 if(isTouch){$('btnAct').style.display='block';}
-function mobLayout(){const mob=isTouch||innerWidth<820||innerHeight<520;document.body.classList.toggle('mob',mob);document.body.classList.toggle('port',mob&&innerHeight>innerWidth);document.body.classList.toggle('land',mob&&innerHeight<=innerWidth);
+let COL={};try{COL=JSON.parse(localStorage.getItem('mm-col')||'{}')||{};}catch(e){}
+function applyCol(){$('hud').classList.toggle('col',!!COL.hud);$('goal').classList.toggle('col',!!COL.goal);$('shoplist').classList.toggle('col',!!COL.list);
+  document.querySelectorAll('.ptg').forEach(b=>{b.textContent=COL[b.dataset.col]?'+':'–';});}
+document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.closest('.ptg');if(!b)return;e.preventDefault();e.stopPropagation();COL[b.dataset.col]=!COL[b.dataset.col];try{localStorage.setItem('mm-col',JSON.stringify(COL));}catch(_){}applyCol();},true);
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.ptg')){e.preventDefault();e.stopPropagation();}},true);
+applyCol();
+function mobLayout(){document.body.classList.toggle('rot',isTouch&&innerHeight>innerWidth);const mob=isTouch||innerWidth<820||innerHeight<520;document.body.classList.toggle('mob',mob);document.body.classList.toggle('port',mob&&innerHeight>innerWidth);document.body.classList.toggle('land',mob&&innerHeight<=innerWidth);
   $('bGoals').textContent=mob?'📋':'📋 Ziele';$('bMap').textContent=mob?'🗺️':'🗺️ Karte';$('bFast').textContent=mob?'⏩2×':'⏩ 2×';lastHud='';}
 mobLayout();addEventListener('resize',mobLayout);addEventListener('orientationchange',()=>setTimeout(mobLayout,200));
 $('bStart').onclick=()=>{audioInit();if(S.avatar==null)showChar();else beginGame();};
