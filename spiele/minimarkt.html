@@ -1726,7 +1726,7 @@ function updateEmp(dt){
   emp.moving=false;
   if(emp.state==='applicant'||emp.state==='talk'||emp.state==='leaving')return;
   if(!S.employee){return;}
-  const h=S.time/60,workTime=h>=8.5&&h<18.5;
+  const h=S.time/60,custLeft=queue.length>0||npcs.some(n=>n.kind==='cust'&&!n.toy&&!n.dead&&n.state!=='leave'),workTime=(h>=8.5&&h<18.5)||(emp.here&&h>=18&&custLeft); // Feierabend erst, wenn alle Kunden abkassiert sind
   if(!workTime){if(emp.here&&emp.state!=='home'){emp.state='home';empGo(34,18,[shopIdx,wholeIdx],()=>{emp.here=false;emp.state='off2';});}return;}
   if(!emp.here){emp.x=34.5;emp.y=18.72;emp.here=true;emp.state='work';empGo(30,22,[shopIdx]);return;}
   if(emp.state==='buy'){emp.t-=dt;if(emp.t<=0)empBuy();return;}
@@ -1793,7 +1793,7 @@ function updateTEmp(dt){
   temp.moving=false;
   if(temp.state==='applicant'||temp.state==='talk'||temp.state==='leaving')return;
   if(!S.toyEmployee)return;
-  const h=S.time/60,workTime=h>=8.5&&h<18.5;
+  const h=S.time/60,custLeft=tqueue.length>0||npcs.some(n=>n.kind==='cust'&&n.toy&&!n.dead&&n.state!=='leave'),workTime=(h>=8.5&&h<18.5)||(temp.here&&h>=18&&custLeft);
   if(!workTime){if(temp.here&&temp.state!=='home'){temp.state='home';tempGo(114,18,()=>{temp.here=false;temp.state='off2';});}return;}
   if(!temp.here){temp.x=114.5;temp.y=18.72;temp.here=true;temp.state='work';tempGo(TREG[0],TREG[1]);return;}
   if(temp.state==='order'){temp.t-=dt;if(temp.t<=0)tempOrder();return;}
@@ -1887,7 +1887,7 @@ function updateECust(n,dt){
   }
 }
 function updateElecStaff(dt){
-  if(!S.elecOwned)return;const h=S.time/60,work=h>=8.5&&h<18.5;
+  if(!S.elecOwned)return;const h=S.time/60,custLeft=equeue.length>0||npcs.some(n=>n.kind==='ecust'&&!n.dead&&n.state!=='leave'),work=(h>=8.5&&h<18.5)||(elecStaff[0].here&&h>=18&&custLeft);
   elecStaff.forEach(st=>{st.here=work;});if(!work)return;
   const [c,k]=elecStaff;
   // Kasse

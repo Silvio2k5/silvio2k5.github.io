@@ -46,17 +46,22 @@
   const badgeCss = document.createElement('style');
   badgeCss.textContent = '.xbadge{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#7fe0a0;border:1px solid rgba(127,224,160,.45);border-radius:99px;padding:2px 9px;white-space:nowrap}';
   head.appendChild(badgeCss);
-  const xBadge = () => { const s = document.createElement('span'); s.className = 'xbadge'; s.textContent = '🌐 Online · Crossplay PC & Handy'; s.title = 'Online 1 gegen 1 – PC und Handy können gegeneinander spielen'; return s; };
+  // Singleplayer-Spiele mit Online-Bestenliste
+  const SOLO_SPIELE = ['mini-markt'];
+  const xBadge = id => { const s = document.createElement('span'); s.className = 'xbadge';
+    if (SOLO_SPIELE.includes(id)) { s.textContent = '👤 Singleplayer · Online-Bestenliste'; s.title = 'Allein spielen – dein Ergebnis kommt in die weltweite Bestenliste'; }
+    else { s.textContent = '🌐 Online · Crossplay PC & Handy'; s.title = 'Online 1 gegen 1 – PC und Handy können gegeneinander spielen'; }
+    return s; };
   function badges() {
-    for (const id of ONLINE_SPIELE) {
+    for (const id of [...ONLINE_SPIELE, ...SOLO_SPIELE]) {
       document.querySelectorAll('.card[data-open="' + id + '"] .cbody').forEach(b => {
         if (b.querySelector('.xbadge')) return;
-        const t = b.querySelector('.tag'); if (t) t.after(xBadge()); else b.prepend(xBadge());
+        const t = b.querySelector('.tag'); if (t) t.after(xBadge(id)); else b.prepend(xBadge(id));
       });
       const hero = document.querySelector('.hero');
-      if (hero && hero.querySelector('[data-open="' + id + '"]')) { const m = hero.querySelector('.metarow'); if (m && !m.querySelector('.xbadge')) m.appendChild(xBadge()); }
+      if (hero && hero.querySelector('[data-open="' + id + '"]')) { const m = hero.querySelector('.metarow'); if (m && !m.querySelector('.xbadge')) m.appendChild(xBadge(id)); }
       const det = document.querySelector('#modalRoot .detail');
-      if (det && decodeURIComponent((location.hash || '').slice(1)) === id) { const d = det.querySelector('.dtitle > div'); if (d && !d.querySelector('.xbadge')) d.appendChild(xBadge()); }
+      if (det && decodeURIComponent((location.hash || '').slice(1)) === id) { const d = det.querySelector('.dtitle > div'); if (d && !d.querySelector('.xbadge')) d.appendChild(xBadge(id)); }
     }
   }
   new MutationObserver(badges).observe(document.body, { childList: true, subtree: true });
