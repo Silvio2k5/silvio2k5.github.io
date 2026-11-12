@@ -411,7 +411,7 @@ MS_ORDER.forEach(k=>{const m=MS[k],ox=m.x-29,oy=m.y-19,sh=([x,y])=>[x+ox,y+oy];
 
 // ================== SPIELSTAND ==================
 const SAVE_KEY='minimarkt_save_v1';
-function newState(){return {goalVer:3,ms:{},money:0,day:1,time:8*60,owned:false,open:false,slots:[null,null,null,null,null],inv:{},rep:50,served:0,revenue:0,goal:0,shopName:'Mini-Markt',px:8.5,py:12.7,todayRev:0,todayCust:0,muted:false,avatar:null,welcomed:false,introDone:false,applied:false,invited:false,callAt:null,callDeclined:false,hired:false,workMin:0,warnings:0,arrivedDay:null,lastWorkDay:null,wage:0};}
+function newState(){return {goalVer:4,ms:{},money:0,day:1,time:8*60,owned:false,open:false,slots:[null,null,null,null,null],inv:{},rep:50,served:0,revenue:0,goal:0,shopName:'Mini-Markt',px:8.5,py:12.7,todayRev:0,todayCust:0,muted:false,avatar:null,welcomed:false,introDone:false,applied:false,invited:false,callAt:null,callDeclined:false,hired:false,workMin:0,warnings:0,arrivedDay:null,lastWorkDay:null,wage:0};}
 let S=newState();
 function save(){if(typeof syLoaded!=='undefined'&&syLoaded)return;let st=false;try{st=started;}catch(e){}try{if(st)S.savedAt=Date.now();S.px=player.x;S.py=player.y;localStorage.setItem(SAVE_KEY,JSON.stringify(S));localStorage.setItem('mmStats',JSON.stringify({umsatz:Math.floor(umsatzGesamt())}));}catch(e){}}
 function umsatzGesamt(){return S.umsatz??(S.revenue||0);}
@@ -1222,12 +1222,11 @@ const GOALS=[
  {t:'Fahr mit einem Fahrgeschäft – Riesenrad, Karussell, Autoscooter oder Achterbahn!',d:()=>!!S.rodeRide},
  {t:'Geh zurück zu deinem Auto auf dem Parkplatz.',d:()=>!!S.parkSaleTalk},
  {t:'__parkbuy',d:()=>!!S.parkOwned},
- {t:'__rich',d:()=>S.money>=RICH_GOAL},
  {t:'__cafe',d:()=>!!S.cafeOpen},
  {t:'Das Café Sonne hat wieder geöffnet – du hast Mini-Markt durchgespielt! 🎉 Spiel einfach weiter, so lange du magst.',d:()=>false}
 ];
 const RICH_GOAL=1000000;
-function checkGoals(){const di=GOALS.findIndex(g=>g.t==='__daily');if(S.hired&&!S.owned&&S.goal>di)S.goal=di;while(S.goal<GOALS.length-1&&GOALS[S.goal].d()){S.goal++;if(S.goal===1&&!S.owned&&!storyOpen)setTimeout(()=>{if(!storyOpen&&!dlgOpen)say(`Da ist ja der kleine Markt aus der Zeitung! Hoffentlich klappt das mit dem Job …`,[{t:'OK',f:()=>{sayHide();storyOpen=false;}}]);},300);if(GOALS[S.goal].t==='__drive3'&&!S.visited3)setTimeout(()=>{if(!storyOpen&&!dlgOpen)say('Beide Läden laufen richtig gut! Man sagt, hinter der Nachbarstadt gibt es ein riesiges Einkaufszentrum … Das sollte ich mir mal ansehen!',[{t:'OK',f:endTalk}]);},500);if(GOALS[S.goal].t==='__cafe')setTimeout(()=>{if(!storyOpen&&!dlgOpen)say(`${eur(RICH_GOAL)} auf dem Konto! Vom Aushilfsjob zum Besitzer eines Einkaufszentrums und eines Freizeitparks … Ich hab's geschafft – ich bin Millionär!`,[{t:'JUHU!',f:endTalk}]);},500);toast('✔ Ziel erreicht!','good');beep(784,.1,'square',.04);beep(1046,.18,'square',.04,.1);}{const g0=GOALS[S.goal].t,gt=g0==='__daily'?dailyGoal():g0==='__drive'?'Fahre in die nächste Stadt – dein Auto steht neben deinem Haus. (Hier klicken)':g0==='__furn'?'Im Möbelhaus der Nachbarstadt (neben deinem Spielzeugladen) gibt es Regale und Deko. Kauf dir etwas Schönes!':g0==='__rich'?`Werde Millionär! Deine Läden verdienen jetzt für dich.\n💰 ${eur(S.money)} / ${eur(RICH_GOAL)}`:g0==='__elec'?`Kaufe den Elektromarkt im Einkaufszentrum (vorne in der Mitte).\n🔌 ${eur(S.money)} / ${eur(ELEC_PRICE)}`:g0==='__mall'?mallGoalText():g0==='__cafe'?(S.cafeFundDay!=null?'Die Renovierung läuft – in zwei Tagen öffnet das Café Sonne wieder.':S.cafeAsked?`Hilf dem Besitzer vom Café Sonne bei der Renovierung (${eur(CAFE_COST)}) – er wartet vor seinem Café.`:cityOf(player.x)===1?'Jemand in deiner Heimatstadt möchte dich sprechen – geh nach draußen.':'Fahr in deine Heimatstadt – dort möchte dich jemand sprechen.'):g0==='__parkad'?'Geh ins Einkaufszentrum – dort möchte dich jemand sprechen.':g0==='__drive4'?(S.carCity===4?'Geh durch das Tor in den Freizeitpark (Kassenhäuschen rechts neben dem Eingang).':'Fahr zum Freizeitpark – er liegt hinter dem Einkaufszentrum. (Hier klicken)'):g0==='__parkbuy'?`Kaufe den Freizeitpark am Kassenhäuschen neben dem Eingang.\n🎡 ${eur(S.money)} / ${eur(PARK.price)}`:g0==='__drive3'?'Fahre zum Einkaufszentrum – es liegt hinter der Nachbarstadt. (Hier klicken)':g0==='__toy'?`Kaufe den Spielzeugladen in der Nachbarstadt.\n🧸 ${eur(S.money)} / ${eur(TOY_PRICE)}`:g0==='__car'?`Kaufe ein Auto, um weitere Städte zu erkunden – das Autohaus ist rechts in der Stadt.\n🚗 ${eur(S.money)} / ${eur(DEALER[0].price)}`:g0;if($('goalT').textContent!==gt)$('goalT').textContent=gt;}}
+function checkGoals(){const di=GOALS.findIndex(g=>g.t==='__daily');if(S.hired&&!S.owned&&S.goal>di)S.goal=di;while(S.goal<GOALS.length-1&&GOALS[S.goal].d()){S.goal++;if(S.goal===1&&!S.owned&&!storyOpen)setTimeout(()=>{if(!storyOpen&&!dlgOpen)say(`Da ist ja der kleine Markt aus der Zeitung! Hoffentlich klappt das mit dem Job …`,[{t:'OK',f:()=>{sayHide();storyOpen=false;}}]);},300);if(GOALS[S.goal].t==='__drive3'&&!S.visited3)setTimeout(()=>{if(!storyOpen&&!dlgOpen)say('Beide Läden laufen richtig gut! Man sagt, hinter der Nachbarstadt gibt es ein riesiges Einkaufszentrum … Das sollte ich mir mal ansehen!',[{t:'OK',f:endTalk}]);},500);toast('✔ Ziel erreicht!','good');beep(784,.1,'square',.04);beep(1046,.18,'square',.04,.1);}{const g0=GOALS[S.goal].t,gt=g0==='__daily'?dailyGoal():g0==='__drive'?'Fahre in die nächste Stadt – dein Auto steht neben deinem Haus. (Hier klicken)':g0==='__furn'?'Im Möbelhaus der Nachbarstadt (neben deinem Spielzeugladen) gibt es Regale und Deko. Kauf dir etwas Schönes!':g0==='__rich'?`Werde Millionär! Deine Läden verdienen jetzt für dich.\n💰 ${eur(S.money)} / ${eur(RICH_GOAL)}`:g0==='__elec'?`Kaufe den Elektromarkt im Einkaufszentrum (vorne in der Mitte).\n🔌 ${eur(S.money)} / ${eur(ELEC_PRICE)}`:g0==='__mall'?mallGoalText():g0==='__cafe'?(S.cafeFundDay!=null?'Die Renovierung läuft – in zwei Tagen öffnet das Café Sonne wieder.':!cafeDue()?`Genieß deinen Erfolg – deine Läden und der Freizeitpark verdienen jetzt für dich.\n💰 ${eur(S.money)}`:S.cafeAsked?`Hilf dem Besitzer vom Café Sonne bei der Renovierung (${eur(CAFE_COST)}) – er wartet vor seinem Café.`:cityOf(player.x)===1?'Jemand in deiner Heimatstadt möchte dich sprechen – geh nach draußen.':'Fahr in deine Heimatstadt – dort möchte dich jemand sprechen.'):g0==='__parkad'?'Geh ins Einkaufszentrum – dort möchte dich jemand sprechen.':g0==='__drive4'?(S.carCity===4?'Geh durch das Tor in den Freizeitpark (Kassenhäuschen rechts neben dem Eingang).':'Fahr zum Freizeitpark – er liegt hinter dem Einkaufszentrum. (Hier klicken)'):g0==='__parkbuy'?`Kaufe den Freizeitpark am Kassenhäuschen neben dem Eingang.\n🎡 ${eur(S.money)} / ${eur(PARK.price)}`:g0==='__drive3'?'Fahre zum Einkaufszentrum – es liegt hinter der Nachbarstadt. (Hier klicken)':g0==='__toy'?`Kaufe den Spielzeugladen in der Nachbarstadt.\n🧸 ${eur(S.money)} / ${eur(TOY_PRICE)}`:g0==='__car'?`Kaufe ein Auto, um weitere Städte zu erkunden – das Autohaus ist rechts in der Stadt.\n🚗 ${eur(S.money)} / ${eur(DEALER[0].price)}`:g0;if($('goalT').textContent!==gt)$('goalT').textContent=gt;}}
 function goalClickable(){const g=GOALS[S.goal];return !!g&&((g.t==='__drive4'&&S.carCity!==4&&!!S.car)||(g.t==='__drive'&&!S.visited2)||(g.t==='__drive3'&&!S.visited3&&!!S.car));}
 
 // ---------- Bestenliste (gleiche Datenbank wie die Spielbibliothek) ----------
@@ -1322,7 +1321,7 @@ GCHAP[GOALS.findIndex(g=>g.t==='__drive3')]='Kapitel 4 · Das Einkaufszentrum';
 function dlgGoals(){
   const ri=GOALS.findIndex(g=>g.t==='__rich');let h='<div class="gtree">';
   GOALS.forEach((g,i)=>{
-    const ch=i===ri?'Kapitel 6 · Millionär werden':g.t==='__cafe'?'Kapitel 7 · Das Café Sonne':i===GOALS.findIndex(x=>x.t==='__parkad')?'Kapitel 5 · Der Freizeitpark':GCHAP[i];if(ch)h+=`<div class="gch">${ch}</div>`;
+    const ch=i===ri?'Kapitel 6 · Das Café Sonne':g.t==='__cafe'?'Kapitel 6 · Das Café Sonne':i===GOALS.findIndex(x=>x.t==='__parkad')?'Kapitel 5 · Der Freizeitpark':GCHAP[i];if(ch)h+=`<div class="gch">${ch}</div>`;
     const st=i<S.goal?'done':i===S.goal?'cur':'todo',txt=GLABEL()[g.t]||g.t;
     h+=`<div class="gn ${st}"><span class="gd">${st==='done'?'✔':st==='cur'?'▶':'○'}</span><span class="gt">${esc(txt)}</span></div>`;});
   h+='</div>';
@@ -1776,6 +1775,7 @@ function resetWorld(){
   if(S.toyOwned&&!S.toySlots)S.toySlots=TOY_SLOTS.map(()=>({type:'toy',stock:{}}));
   if((S.goalVer||1)<2){const p0=GOALS.findIndex(g=>g.t==='__furn');if(S.goal>=p0&&!S.furnBought)S.goal=p0;S.goalVer=2;}
   if((S.goalVer||1)<3){const m=GOALS.findIndex(g=>g.t==='__mall');if(S.goal>m)S.goal=m+1;S.goalVer=3;}
+  if((S.goalVer||1)<4){const c=GOALS.findIndex(g=>g.t==='__cafe');if(S.goal>c&&!S.cafeOpen)S.goal=c;if(S.goal>GOALS.length-1)S.goal=GOALS.length-1;S.goalVer=4;}
   S.ms=S.ms||{};msMigrate();
   npcs.length=0;queue.length=0;tqueue.length=0;msReset();try{trucks.length=0;}catch(e){}loadLayout();applySlotSolids();applyCarSolids();applyToySolids();MS_ORDER.forEach(k=>applyLayout(k));buildRoofs();initCars();
   for(let k=0;k<6;k++)spawnWalker();
@@ -2482,10 +2482,11 @@ const CAFE_COST=15000,CAFE_WHO={n:'Café-Besitzer',c:'#c9853a'};
 const cafeSpr=charSprites({h:'#5a3a1e',s:'#ffdbac',c:'#f4efe1',p:'#c9853a'},'glasses');
 const cafeO={x:0,y:0,path:[],spd:2.6,dir:'down',moving:false,anim:0,kind:'cafe',state:'off',tries:0};
 function cafeGoal(){return GOALS[S.goal]&&GOALS[S.goal].t==='__cafe';}
+function cafeDue(){return !!S.parkOwned&&S.day>=(S.parkDay??S.day)+7;}
 function cafeGo(tx,ty){cafeO.tries++;const p=findPath(Math.floor(cafeO.x),Math.floor(cafeO.y-.2),tx,ty,[]);if(p&&p.length){p.pop();cafeO.path=p;}}
 function updateCafeO(dt){
   if(cafeO.state==='off'){
-    if(cafeGoal()&&!S.cafeAsked&&S.cafeFundDay==null&&!storyOpen&&!dlgOpen&&!BUILD.on&&cityOf(player.x)===1&&insideB<0&&S.time>=8*60&&S.time<20*60){
+    if(cafeGoal()&&cafeDue()&&!S.cafeAsked&&S.cafeFundDay==null&&!storyOpen&&!dlgOpen&&!BUILD.on&&cityOf(player.x)===1&&insideB<0&&S.time>=8*60&&S.time<20*60){
       cafeO.x=40.5;cafeO.y=15.72;cafeO.state='walk';cafeO.tries=0;cafeGo(Math.floor(player.x),Math.floor(player.y-.2));}
     return;}
   if(cafeO.path.length){npcMove(cafeO,dt);return;}
@@ -2506,7 +2507,7 @@ function cafeTalk(first){
       S.money-=CAFE_COST;S.cafeFundDay=S.day;S.cafeAsked=true;save();kaching();setTimeout(kaching,250);
       say('Wirklich?! Vielen, vielen Dank! Dann fange ich sofort an. In zwei Tagen ist alles fertig – und dann gibt es endlich wieder Kuchen!',[{t:'GERN GESCHEHEN',f:back}],CAFE_WHO);}},
     {t:'ABLEHNEN',cls:'gray',f:()=>{S.cafeAsked=true;save();say('Schade … Falls Sie es sich anders überlegen: Sie finden mich vor meinem Café.',[{t:'OK',f:back}],CAFE_WHO);}}],CAFE_WHO);
-  if(first)say(`Hallo! Ich bin der Besitzer vom Café Sonne. Die ganze Stadt spricht von Ihnen – Millionär, Glückwunsch!`,[{t:'WEITER',f:ask}],CAFE_WHO);
+  if(first)say(`Hallo! Ich bin der Besitzer vom Café Sonne. Die ganze Stadt spricht von Ihnen – das Einkaufszentrum, der Freizeitpark … Glückwunsch!`,[{t:'WEITER',f:ask}],CAFE_WHO);
   else ask();
 }
 function cafeDoor(){
@@ -2520,7 +2521,7 @@ function checkCafeOpen(){
   S.cafeOpen=true;save();storyOpen=true;player.moving=false;$('prompt').style.display='none';
   const c=$('newsPic'),g=c.getContext('2d');g.imageSmoothingEnabled=false;const b=B.find(x=>x.id==='cafe');g.clearRect(0,0,c.width,c.height);g.drawImage(b.roofC,0,0,c.width,c.height);
   $('newsDate').textContent=`Tag ${S.day} · Die Zeitung für unsere kleine Stadt · Preis 1,20 €`;
-  $('newsText').innerHTML=`Erinnern Sie sich? „Café Sonne macht Pause“ stand vor langer Zeit hier in dieser Zeitung – und die Besitzer versprachen: „Bald gibt es wieder Kuchen!“ Heute ist es endlich so weit: Frisch renoviert öffnet das Café Sonne wieder seine Türen. Möglich gemacht hat das ${esc(playerName())}, früher Aushilfe im kleinen Mini-Markt, heute Millionär. Die ganze Stadt freut sich – der Kuchen ist schon im Ofen!`;
+  $('newsText').innerHTML=`Erinnern Sie sich? „Café Sonne macht Pause“ stand vor langer Zeit hier in dieser Zeitung – und die Besitzer versprachen: „Bald gibt es wieder Kuchen!“ Heute ist es endlich so weit: Frisch renoviert öffnet das Café Sonne wieder seine Türen. Möglich gemacht hat das ${esc(playerName())}, früher Aushilfe im kleinen Mini-Markt, heute Besitzer eines Einkaufszentrums und eines Freizeitparks. Die ganze Stadt freut sich – der Kuchen ist schon im Ofen!`;
   $('news').style.display='flex';for(let k=0;k<6;k++)beep(180+R2()*400,.04,'sawtooth',.012,k*.035);
 }
 $('newsClose').onclick=()=>{$('news').style.display='none';blip();
