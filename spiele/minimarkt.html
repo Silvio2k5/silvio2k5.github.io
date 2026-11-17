@@ -2183,6 +2183,8 @@ function resetWorld(){
 }
 syncB();genMap();renderBase();baseSolid=solid.slice();
 let loaded=load();
+const SNAMES_F=[TX('Lena'),TX('Mia'),TX('Sophie'),TX('Emma'),TX('Hannah'),TX('Lea'),TX('Anna'),TX('Laura'),TX('Julia'),TX('Sarah'),TX('Nina'),TX('Clara'),TX('Paula'),TX('Marie'),TX('Ida')],SNAMES_M=[TX('Paul'),TX('Jonas'),TX('Felix'),TX('Lukas'),TX('Ben'),TX('Tim'),TX('Max'),TX('Leon'),TX('Noah'),TX('Jan'),TX('Tom'),TX('Erik'),TX('David'),TX('Finn'),TX('Ole')];
+const STAFF_LETTERS=TX('ABDEFGHKLMNRSTW');
 resetWorld();buildInteracts();resize();
 // ---------- Geschichte: Aufwachen, Zeitung, Bewerbung ----------
 let wakeT=0,storyOpen=false,paperOpen=false,sayBtns=[],sayFull='',sayPos=0,sayTimer=null;
@@ -2536,8 +2538,6 @@ function staffClean(npc,loc,go,sf){const L=dirtL(loc);if(!L.length)return false;
 function staffCleanTick(npc,loc,dt){if(npc.state!=='cleaning')return false;npc.t-=dt;if(npc.t<=0){const L=dirtL(loc),i=L.indexOf(npc.cleanD);if(i>=0)cleanDirt(loc,i);npc.cleanD=null;npc.state='work';}return true;}
 
 // ---------- Personal: Arbeitsagentur, Stärken, Lohn, Standorte ----------
-const SNAMES_F=[TX('Lena'),TX('Mia'),TX('Sophie'),TX('Emma'),TX('Hannah'),TX('Lea'),TX('Anna'),TX('Laura'),TX('Julia'),TX('Sarah'),TX('Nina'),TX('Clara'),TX('Paula'),TX('Marie'),TX('Ida')],SNAMES_M=[TX('Paul'),TX('Jonas'),TX('Felix'),TX('Lukas'),TX('Ben'),TX('Tim'),TX('Max'),TX('Leon'),TX('Noah'),TX('Jan'),TX('Tom'),TX('Erik'),TX('David'),TX('Finn'),TX('Ole')];
-const STAFF_LETTERS=TX('ABDEFGHKLMNRSTW');
 function staffAt(loc){return (S.staff||[]).find(s=>s.loc===loc&&S.day>=s.start);}
 function staffAny(loc){return (S.staff||[]).find(s=>s.loc===loc||s.next===loc);}
 function staffLocs(){const L=[];if(S.owned)L.push('mm');if(S.toyOwned)L.push('toy');MSX.forEach(k=>{if(msOwned(k))L.push(k);});return L;}
